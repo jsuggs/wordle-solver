@@ -12,3 +12,6 @@ Based on the progression of the choices, I'll use an algorithm that decides what
 ## Words
 I'm going to start with this list I found here
 https://www-cs-faculty.stanford.edu/~knuth/sgb-words.txt
+
+## Algorithm notes
+Ok, basic handling of correct and not found letters.  Now its time to put in the wrong location logic.

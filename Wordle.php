@@ -83,17 +83,24 @@ class QueryBuilder
 
 		$notFoundLetters = $this->getNotFoundLetters($wordle);
 		$correctLetters = $this->getCorrectLetters($wordle);
-		var_dump($notFoundLetters, $correctLetters);
-		$expandedLetterList = implode(',', array_map(function($letter) {
-			return sprintf("'%s'", $letter);
-		}, $notFoundLetters));
+		$wrongLocationLetters = $this->getWrongLocationLetters($wordle);
+		//var_dump($notFoundLetters, $correctLetters, $wrongLocationLetters);
+		$expandedLetterList = self::letterList($notFoundLetters);
 
 		// Build out the inclusion and exclusions based on the results we have made so far
 		foreach ([1,2,3,4,5] as $position) {
+			// If the letter is correct, use it
 			if (isset($correctLetters[$position])) {
 				$sql .= sprintf(" AND c%d = '%s'", $position, $correctLetters[$position]);
 			} else {
+				// always exclude the letters that aren't in the word all together
 				$sql .= sprintf(' AND c%d NOT IN (%s)', $position, $expandedLetterList);
+
+				// Exclude the words with letters that aren't in the right place
+				if (isset($wrongLocationLetters[$position])) {
+					$wrongLetters = self::letterList($wrongLocationLetters[$position]);
+					$sql .= sprintf(' AND c%d NOT IN (%s)', $position, $wrongLetters);
+				}
 			}
 		}
 		$sql .= sprintf(' ORDER BY %s LIMIT 1', $strategy->fieldName);
@@ -125,6 +132,31 @@ class QueryBuilder
 		return array_unique($notFoundLetters);
 	}
 
+	private function getWrongLocationLetters(Wordle $wordle) : array
+	{
+		$wrongLocationLetters = [];
+
+		foreach ($wordle->results as $result) {
+			if ($result->c1 == Result::WRONG_LOCATION) {
+				$wrongLocationLetters[1][] = $result->word{0};
+			}
+			if ($result->c2 == Result::WRONG_LOCATION) {
+				$wrongLocationLetters[2][] = $result->word{1};
+			}
+			if ($result->c3 == Result::WRONG_LOCATION) {
+				$wrongLocationLetters[3][] = $result->word{2};
+			}
+			if ($result->c4 == Result::WRONG_LOCATION) {
+				$wrongLocationLetters[4][] = $result->word{3};
+			}
+			if ($result->c5 == Result::WRONG_LOCATION) {
+				$wrongLocationLetters[5][] = $result->word{4};
+			}
+		}
+
+		return $wrongLocationLetters;
+	}
+
 	private function getCorrectLetters(Wordle $wordle) : array
 	{
 		$correctLetters = [];
@@ -148,6 +180,13 @@ class QueryBuilder
 		}
 
 		return $correctLetters;
+	}
+
+	private static function letterList(array $letters)
+	{
+		return implode(',', array_map(function($letter) {
+			return sprintf("'%s'", $letter);
+		}, $letters));
 	}
 }
 
