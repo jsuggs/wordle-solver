@@ -19,7 +19,7 @@ SQL;
 	public function __construct(string $dbFile)
 	{
 		$this->conn = new SQLITE3($dbFile);
-		$this->createSchema();
+		//$this->createSchema();
 
 		/*if (!file_exists($dbFile)){
 			$this->createSchema();

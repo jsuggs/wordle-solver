@@ -1,0 +1,15 @@
+{
+	"guesses": [
+		"STONE"
+	],
+	"results": [
+		{
+			"word": "STONE",
+			"c1": "N",
+			"c2": "W",
+			"c3": "N",
+			"c4": "N",
+			"c5": "N"
+		}
+	]
+}
