@@ -15,3 +15,7 @@ https://www-cs-faculty.stanford.edu/~knuth/sgb-words.txt
 
 ## Algorithm notes
 Ok, basic handling of correct and not found letters.  Now its time to put in the wrong location logic.
+Now, need to make sure that if letters are in the wrong place, that we limit to words that have those letters.
+
+### TODO
+Not taking into consideration double letters at the moment.

@@ -75,6 +75,7 @@ class StrategyDecider
 class QueryBuilder
 {
 	private $c1Clause, $c2Clause;
+	private static $positions = [1,2,3,4,5];
 
 	public function getQuery(Wordle $wordle, Strategy $strategy) : string
 	{
@@ -88,7 +89,7 @@ class QueryBuilder
 		$expandedLetterList = self::letterList($notFoundLetters);
 
 		// Build out the inclusion and exclusions based on the results we have made so far
-		foreach ([1,2,3,4,5] as $position) {
+		foreach (self::$positions as $position) {
 			// If the letter is correct, use it
 			if (isset($correctLetters[$position])) {
 				$sql .= sprintf(" AND c%d = '%s'", $position, $correctLetters[$position]);
@@ -103,6 +104,20 @@ class QueryBuilder
 				$sql .= sprintf(' AND c%d NOT IN (%s)', $position, $wrongLetterList);
 			}
 		}
+
+		// Make sure that the word has letters that are in the wrong place
+		// Note: I think double letters is going to have to be refactored here
+		foreach ($wrongLocationLetters as $wrongPosition => $letters) {
+			$potentialLocations = array_diff(self::$positions, [$wrongPosition]);
+
+			$alternatePositionSql = implode(' OR ', array_map(function($position) use ($letters) {
+				// TODO: This is wrong, only using one of the letters
+				return sprintf("c%d = '%s'", $position, $letters[0]);
+			}, $potentialLocations));
+
+			$sql .= sprintf('AND (%s)', $alternatePositionSql);
+		}
+
 		$sql .= sprintf(' ORDER BY %s LIMIT 1', $strategy->fieldName);
 
 		return $sql;

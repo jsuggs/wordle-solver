@@ -1,7 +1,7 @@
 {
 	"guesses": [
 		"STONE",
-		"WHICH"
+		"RIGHT"
 	],
 	"results": [
 		{
@@ -13,12 +13,12 @@
 			"c5": "N"
 		},
 		{
-			"word": "WHICH",
-			"c1": "C",
+			"word": "RIGHT",
+			"c1": "N",
 			"c2": "N",
 			"c3": "N",
-			"c4": "C",
-			"c5": "C"
+			"c4": "W",
+			"c5": "W"
 		}
 	]
 }
