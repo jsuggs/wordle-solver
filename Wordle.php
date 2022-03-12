@@ -38,10 +38,45 @@ class Solver
 
 	public function solve() : Guess
 	{
-		$strategy = StrategyDecider::getStrategy($this->wordle);
+		$primaryStrategy = StrategyDecider::getPrimaryStrategy($this->wordle, $this->database);
+
+		$guess = $primaryStrategy->guess($this->wordle);
+
+		if (!$guess) {
+			// Fallback Strategy?
+			throw new Exception('No Guess');
+		}
+
+		return $guess;
+	}
+}
+
+abstract class Strategy
+{
+	abstract public function guess(Wordle $wordle) : Guess;
+}
+
+class FallBackStrategy extends Strategy
+{
+	public function guess(Wordle $wordle) : Guess
+	{
+		// TODO
+	}
+}
+
+abstract class DatabaseStrategy extends Strategy
+{
+	private Database $database;
+
+	public function __construct(Database $database)
+	{
+		$this->database = $database;
+	}
+
+	public function guess(Wordle $wordle) : Guess
+	{
 		$qb = new QueryBuilder();
-		$query = $qb->getQuery($this->wordle, $strategy);
-		var_dump($query);
+		$query = $qb->getQuery($wordle, $this->getFieldName());
 
 		$word = $this->database->exeuteWordQuery($query);
 
@@ -53,22 +88,43 @@ class Solver
 
 		return $guess;
 	}
+
+	abstract protected function getFieldName() : string;
 }
 
-class Strategy
+class FrequencyStrategy extends DatabaseStrategy
 {
-	public string $fieldName;
+	private const FIELD_NAME = 'frequency';
+
+	protected function getFieldName() : string
+	{
+		return self::FIELD_NAME;
+	}
+}
+
+class StartingStrategy extends Strategy
+{
+	public function guess(Wordle $wordle) : Guess
+	{
+		return new Guess('STONE');
+	}
 }
 
 class StrategyDecider
 {
-	public static function getStrategy(Wordle $wordle) : Strategy
+	public static function getPrimaryStrategy(Wordle $wordle, Database $database) : Strategy
 	{
-		// Hard code this to frequency for now
-		$strategy = new Strategy();
-		$strategy->fieldName = 'frequency';
+		// Basic logic for determining which strategy to use.
+		if (count($wordle->guesses) == 0)  {
+			return new StartingStrategy;
+		}
 
-		return $strategy;
+		return new FrequencyStrategy($database);
+	}
+
+	public static function getFallbackStrategy(Wordle $wordle) : Strategy
+	{
+		return new FallBackStrategy($wordle);
 	}
 }
 
@@ -77,16 +133,15 @@ class QueryBuilder
 	private $c1Clause, $c2Clause;
 	private static $positions = [1,2,3,4,5];
 
-	public function getQuery(Wordle $wordle, Strategy $strategy) : string
+	public function getQuery(Wordle $wordle, string $fieldName) : string
 	{
 		// Let's go with a brute force approach first.
 		$sql = 'SELECT word FROM words WHERE 1 == 1 ';
 
-		$notFoundLetters = $this->getNotFoundLetters($wordle);
+		list($notFoundLetterPositions, $notFoundLetters) = $this->getNotFoundLetters($wordle);
 		$correctLetters = $this->getCorrectLetters($wordle);
 		$wrongLocationLetters = $this->getWrongLocationLetters($wordle);
-		//var_dump($notFoundLetters, $correctLetters, $wrongLocationLetters);
-		$expandedLetterList = self::letterList($notFoundLetters);
+		var_dump($wrongLocationLetters);
 
 		// Build out the inclusion and exclusions based on the results we have made so far
 		foreach (self::$positions as $position) {
@@ -108,43 +163,52 @@ class QueryBuilder
 		// Make sure that the word has letters that are in the wrong place
 		// Note: I think double letters is going to have to be refactored here
 		foreach ($wrongLocationLetters as $wrongPosition => $letters) {
-			$potentialLocations = array_diff(self::$positions, [$wrongPosition]);
+			foreach ($letters as $letter) {
+				$potentialLocations = array_diff(self::$positions, [$wrongPosition]);
 
-			$alternatePositionSql = implode(' OR ', array_map(function($position) use ($letters) {
-				// TODO: This is wrong, only using one of the letters
-				return sprintf("c%d = '%s'", $position, $letters[0]);
-			}, $potentialLocations));
+				$alternatePositionSql = implode(' OR ', array_map(function($position) use ($letter) {
+					// TODO: This is wrong, only using one of the letters
+					return sprintf("c%d = '%s'", $position, $letter);
+				}, $potentialLocations));
 
-			$sql .= sprintf('AND (%s)', $alternatePositionSql);
+				$sql .= sprintf(' AND (%s)', $alternatePositionSql);
+			}
 		}
 
-		$sql .= sprintf(' ORDER BY %s LIMIT 1', $strategy->fieldName);
+		$sql .= sprintf(' ORDER BY %s LIMIT 1', $fieldName);
+
+		var_dump($sql);
 
 		return $sql;
 	}
 
 	private function getNotFoundLetters(Wordle $wordle) : array
 	{
-		$notFoundLetters = [];
+		$notFoundLetterPositions = $notFoundLetters = [];
 		foreach ($wordle->results as $result) {
 			if ($result->c1 == Result::NOT_FOUND) {
-				$notFoundLetters[1] = $result->word{0};
+				$notFoundLetterPositions[1][] = $result->word{0};
+				$notFoundLetters[] = $result->word{0};
 			}
 			if ($result->c2 == Result::NOT_FOUND) {
-				$notFoundLetters[2] = $result->word{1};
+				$notFoundLetterPositions[2][] = $result->word{1};
+				$notFoundLetters[] = $result->word{1};
 			}
 			if ($result->c3 == Result::NOT_FOUND) {
-				$notFoundLetters[3] = $result->word{2};
+				$notFoundLetterPositions[3][] = $result->word{2};
+				$notFoundLetters[] = $result->word{2};
 			}
 			if ($result->c4 == Result::NOT_FOUND) {
-				$notFoundLetters[4] = $result->word{3};
+				$notFoundLetterPositions[4][] = $result->word{3};
+				$notFoundLetters[] = $result->word{3};
 			}
 			if ($result->c5 == Result::NOT_FOUND) {
-				$notFoundLetters[5] = $result->word{4};
+				$notFoundLetterPositions[5][] = $result->word{4};
+				$notFoundLetters[] = $result->word{4};
 			}
 		}
 
-		return array_unique($notFoundLetters);
+		return [$notFoundLetterPositions, array_unique($notFoundLetters)];
 	}
 
 	private function getWrongLocationLetters(Wordle $wordle) : array
