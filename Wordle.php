@@ -138,10 +138,10 @@ class QueryBuilder
 		// Let's go with a brute force approach first.
 		$sql = 'SELECT word FROM words WHERE 1 == 1 ';
 
-		list($notFoundLetterPositions, $notFoundLetters) = $this->getNotFoundLetters($wordle);
+		list($notFoundLetterPositions, $notFoundLetters, $notFoundLetterCount) = $this->getNotFoundLetters($wordle);
 		$correctLetters = $this->getCorrectLetters($wordle);
 		$wrongLocationLetters = $this->getWrongLocationLetters($wordle);
-		var_dump($wrongLocationLetters);
+		//var_dump($notFoundLetters, $notFoundLetterPositions, $wrongLocationLetters);
 
 		// Build out the inclusion and exclusions based on the results we have made so far
 		foreach (self::$positions as $position) {
@@ -149,10 +149,17 @@ class QueryBuilder
 			if (isset($correctLetters[$position])) {
 				$sql .= sprintf(" AND c%d = '%s'", $position, $correctLetters[$position]);
 			} else {
+				var_dump($position,$notFoundLetterPositions[$position], $wrongLocationLetters[$position]);
 				// Always exclude the letters that aren't in the word all together
 				// Contionally exclude the words with letters that aren't in the right place
+				// Unless there are more than one letter
+				// See if we can figure out if a letter is already accounted for
+				// Do a count
+				// always not found
+
+				$excludedPositionalLetters = $notFoundLetters;
 				$excludedPositionalLetters = (isset($wrongLocationLetters[$position]))
-					? array_unique(array_merge($notFoundLetters, $wrongLocationLetters[$position]))
+					? array_unique(array_merge($notFoundLetters, $notFoundLetterPositions[$position], $wrongLocationLetters[$position]))
 					: $notFoundLetters;
 
 				$wrongLetterList = self::letterList($excludedPositionalLetters);
@@ -178,37 +185,44 @@ class QueryBuilder
 		$sql .= sprintf(' ORDER BY %s LIMIT 1', $fieldName);
 
 		var_dump($sql);
+		var_dump($notFoundLetterCount);
 
 		return $sql;
 	}
 
 	private function getNotFoundLetters(Wordle $wordle) : array
 	{
-		$notFoundLetterPositions = $notFoundLetters = [];
+		$notFoundLetterPositions = $notFoundLetters = $notFoundLetterCount = [];
+
 		foreach ($wordle->results as $result) {
 			if ($result->c1 == Result::NOT_FOUND) {
 				$notFoundLetterPositions[1][] = $result->word{0};
 				$notFoundLetters[] = $result->word{0};
+				$notFoundLetterCount[$result->word{0}]++;
 			}
 			if ($result->c2 == Result::NOT_FOUND) {
 				$notFoundLetterPositions[2][] = $result->word{1};
 				$notFoundLetters[] = $result->word{1};
+				$notFoundLetterCount[$result->word{1}]++;
 			}
 			if ($result->c3 == Result::NOT_FOUND) {
 				$notFoundLetterPositions[3][] = $result->word{2};
 				$notFoundLetters[] = $result->word{2};
+				$notFoundLetterCount[$result->word{2}]++;
 			}
 			if ($result->c4 == Result::NOT_FOUND) {
 				$notFoundLetterPositions[4][] = $result->word{3};
 				$notFoundLetters[] = $result->word{3};
+				$notFoundLetterCount[$result->word{3}]++;
 			}
 			if ($result->c5 == Result::NOT_FOUND) {
 				$notFoundLetterPositions[5][] = $result->word{4};
 				$notFoundLetters[] = $result->word{4};
+				$notFoundLetterCount[$result->word{4}]++;
 			}
 		}
 
-		return [$notFoundLetterPositions, array_unique($notFoundLetters)];
+		return [$notFoundLetterPositions, array_unique($notFoundLetters), $notFoundLetterCount];
 	}
 
 	private function getWrongLocationLetters(Wordle $wordle) : array
