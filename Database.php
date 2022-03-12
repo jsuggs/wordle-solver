@@ -19,7 +19,7 @@ SQL;
 	public function __construct(string $dbFile)
 	{
 		$this->conn = new SQLITE3($dbFile);
-		//$this->createSchema();
+		$this->createSchema();
 
 		/*if (!file_exists($dbFile)){
 			$this->createSchema();
@@ -29,6 +29,17 @@ SQL;
 	public function createSchema()
 	{
 		$this->conn->exec(self::SCHEMA);
+	}
+
+	public function exeuteWordQuery(string $query) : ?string
+	{
+		$query = $this->conn->query($query);
+
+		$data = $query->fetchArray();
+
+		return $data
+			? $data['word']
+			: null;
 	}
 
 	public function importWordsFromFile(string $filename, int $limit = 0)
@@ -45,12 +56,12 @@ SQL;
 		$fh = fopen($filename, 'r');
 		$frequency = 0;
 		while ($word = fgets($fh)) {
-			$stmt->bindValue(':word', $word);
-			$stmt->bindValue(':c1', $word{0});
-			$stmt->bindValue(':c2', $word{1});
-			$stmt->bindValue(':c3', $word{2});
-			$stmt->bindValue(':c4', $word{3});
-			$stmt->bindValue(':c5', $word{4});
+			$stmt->bindValue(':word', strtoupper($word));
+			$stmt->bindValue(':c1', strtoupper($word{0}));
+			$stmt->bindValue(':c2', strtoupper($word{1}));
+			$stmt->bindValue(':c3', strtoupper($word{2}));
+			$stmt->bindValue(':c4', strtoupper($word{3}));
+			$stmt->bindValue(':c5', strtoupper($word{4}));
 			$stmt->bindValue(':frequency', ++$frequency);
 			$stmt->execute();
 

@@ -10,7 +10,7 @@ $wordsFile = 'words.txt';
 
 unlink($dbFile);
 $db = new Database($dbFile);
-$db->importWordsFromFile($wordsFile, 100);
+$db->importWordsFromFile($wordsFile);
 
 function echo_title($title, $style = null)
 {

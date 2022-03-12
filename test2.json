@@ -1,0 +1,24 @@
+{
+	"guesses": [
+		"STONE",
+		"WHICH"
+	],
+	"results": [
+		{
+			"word": "STONE",
+			"c1": "N",
+			"c2": "W",
+			"c3": "N",
+			"c4": "N",
+			"c5": "N"
+		},
+		{
+			"word": "WHICH",
+			"c1": "C",
+			"c2": "N",
+			"c3": "N",
+			"c4": "C",
+			"c5": "C"
+		}
+	]
+}
