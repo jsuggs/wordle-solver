@@ -93,14 +93,14 @@ class QueryBuilder
 			if (isset($correctLetters[$position])) {
 				$sql .= sprintf(" AND c%d = '%s'", $position, $correctLetters[$position]);
 			} else {
-				// always exclude the letters that aren't in the word all together
-				$sql .= sprintf(' AND c%d NOT IN (%s)', $position, $expandedLetterList);
+				// Always exclude the letters that aren't in the word all together
+				// Contionally exclude the words with letters that aren't in the right place
+				$excludedPositionalLetters = (isset($wrongLocationLetters[$position]))
+					? array_unique(array_merge($notFoundLetters, $wrongLocationLetters[$position]))
+					: $notFoundLetters;
 
-				// Exclude the words with letters that aren't in the right place
-				if (isset($wrongLocationLetters[$position])) {
-					$wrongLetters = self::letterList($wrongLocationLetters[$position]);
-					$sql .= sprintf(' AND c%d NOT IN (%s)', $position, $wrongLetters);
-				}
+				$wrongLetterList = self::letterList($excludedPositionalLetters);
+				$sql .= sprintf(' AND c%d NOT IN (%s)', $position, $wrongLetterList);
 			}
 		}
 		$sql .= sprintf(' ORDER BY %s LIMIT 1', $strategy->fieldName);
