@@ -142,10 +142,17 @@ class Result
 class Guess
 {
 	public string $word;
+	public Strategy $strategy;
 
-	public function __construct(string $word)
+	public function __construct(Strategy $strategy, string $word)
 	{
+		$this->strategy = $strategy;
 		$this->word = $word;
+	}
+
+	public function getAlgorithm() : string
+	{
+		return get_class($this->strategy);
 	}
 }
 
@@ -176,6 +183,7 @@ class Solver
 abstract class Strategy
 {
 	abstract public function guess(Wordle $wordle) : Guess;
+	abstract public function getName(): string;
 }
 
 class FallBackStrategy extends Strategy
@@ -183,6 +191,11 @@ class FallBackStrategy extends Strategy
 	public function guess(Wordle $wordle) : Guess
 	{
 		// TODO
+	}
+
+	public function getName() : string
+	{
+		return 'FallBack';
 	}
 }
 
@@ -232,6 +245,11 @@ class FrequencyStrategy extends DatabaseStrategy
 		$sql .= ' ORDER BY f.frequency LIMIT 1';
 
 		return $sql;
+	}
+
+	public function getName() : string
+	{
+		return 'Frequency';
 	}
 }
 
@@ -283,7 +301,7 @@ class LetterReductionStrategy extends DatabaseStrategy
 			throw new Exception('No Guess');
 		}
 
-		$guess = new Guess($word);
+		$guess = new Guess($this, $word);
 
 		return $guess;
 	}
@@ -342,13 +360,34 @@ class LetterReductionStrategy extends DatabaseStrategy
 
 		return $result;
 	}
+
+	public function getName() : string
+	{
+		return 'Reduction';
+	}
 }
 
 class StartingStrategy extends Strategy
 {
+	private int $idx;
+
+	public function __construct(int $idx)
+	{
+		$this->idx = $idx;
+	}
+
 	public function guess(Wordle $wordle) : Guess
 	{
-		return new Guess('STONE');
+		switch($this->idx) {
+			case 0: return new Guess($this, 'STONE');
+			case 1: return new Guess($this, 'GRAIL');
+			default: return new Guess($this, 'CHUMP');
+		}
+	}
+
+	public function getName() : string
+	{
+		return 'Starting';
 	}
 }
 
@@ -360,8 +399,8 @@ class StrategyDecider
 		$numGuesses = $stats->getResultCount();
 
 		// Basic logic for determining which strategy to use.
-		if ($numGuesses === 0)  {
-			return new StartingStrategy;
+		if ($numGuesses < 2)  {
+			return new StartingStrategy($numGuesses);
 		}
 		return new LetterReductionStrategy($database);
 

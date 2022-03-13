@@ -7,15 +7,17 @@ $allWords = [
 
 
 $wordsToTest = [
-	"DELTA"
+	"MIDGE"
 ];
-//$wordsToTest = $allWords;
+$wordsToTest = $allWords;
 
 class TestResult
 {
+	public $time;
 	public function __construct(int $numGuesses, string $word, bool $solved, int $time) {
 		$this->numGuesses = $numGuesses;
 		$this->word = $word;
+		$this->solved = $solved;
 		$this->time = $time;
 	}
 
@@ -48,7 +50,7 @@ class Tester
 
 			$guess = $this->solver->solve($wordle);
 			$result = ResultTester::getGuessResult($word, $guess->word);
-			echo sprintf("Guess %d: %s Result: %s\n", $guessNumber, $guess->word, $result);
+			//echo sprintf("Guess %d: %s Result: %s Algo: %s\n", $guessNumber, $guess->word, $result, $guess->getAlgorithm());
 
 			if ($result->isCorrect()) {
 				$found = true;
@@ -74,9 +76,17 @@ $tester = new Tester($solver);
 
 echo "Starting Tests\n";
 $testResults = [];
-foreach ($wordsToTest as $word) {
+foreach ($wordsToTest as $idx => $word) {
 	echo "Word: $word\n";
-	$testResults[] = $tester->runTest($word);
+	try {
+		$result = $tester->runTest($word);
+		echo sprintf("\tn: %d\n", $result->numGuesses);
+		//var_dump($result);
+	} catch (Exception $e) {
+		echo sprintf("%s\n", 'N');
+	}
+	//echo sprintf("%s\n", 'Y');
+	//$testResults[] =  $result;
 }
 
-var_dump($testResults);
+//var_dump($testResults);
