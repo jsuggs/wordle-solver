@@ -2,71 +2,41 @@
 
 require_once dirname(__FILE__).'/Database.php';
 
-// Already getting too fancy using some styles in the setup script
-echo_title('Create Database');
-
-$dbFile = 'words.db';
-$wordsFile = 'words.txt';
-
+// Blow away the database
+$dbFile = Database::DB_FILE;
 unlink($dbFile);
-$db = new Database($dbFile);
-$db->importWordsFromFile($wordsFile);
 
-function echo_title($title, $style = null)
-{
-    $style = $style ?: 'title';
+$db = new Database();
+$db->setupSchema();
 
-    echo PHP_EOL;
-    echo_style($style, $title.PHP_EOL);
-    echo_style($style, str_repeat('~', strlen($title)).PHP_EOL);
-    echo PHP_EOL;
+// Parse the words file
+$wordsFile = 'tmp/words.csv';
+$wordsInput = fopen('data/words.csv', 'r');
+$wordsOutput = fopen($wordsFile, 'w');
+
+while ($word = strtoupper(rtrim(fgets($wordsInput)))) {
+	fputcsv($wordsOutput, [
+		$word,
+		$word{0},
+		$word{1},
+		$word{2},
+		$word{3},
+		$word{4},
+	]);
 }
 
-function echo_style($style, $message)
-{
-    // ANSI color codes
-    $styles = array(
-        'reset' => "\033[0m",
-        'red' => "\033[31m",
-        'green' => "\033[32m",
-        'yellow' => "\033[33m",
-        'error' => "\033[37;41m",
-        'success' => "\033[37;42m",
-        'title' => "\033[34m",
-    );
-    $supports = has_color_support();
+fclose($wordsInput);
+fclose($wordsOutput);
 
-    echo($supports ? $styles[$style] : '').$message.($supports ? $styles['reset'] : '');
-}
+$importCommands = <<<SH
+sqlite3 $dbFile <<END_SQL
+.mode csv
+.import data/frequency.csv frequency
+.import tmp/words.csv words
+END_SQL
 
-function echo_block($style, $title, $message)
-{
-    $message = ' '.trim($message).' ';
-    $width = strlen($message);
+SH;
 
-    echo PHP_EOL.PHP_EOL;
+echo $importCommands;
 
-    echo_style($style, str_repeat(' ', $width));
-    echo PHP_EOL;
-    echo_style($style, str_pad(' ['.$title.']', $width, ' ', STR_PAD_RIGHT));
-    echo PHP_EOL;
-    echo_style($style, $message);
-    echo PHP_EOL;
-    echo_style($style, str_repeat(' ', $width));
-    echo PHP_EOL;
-}
-
-function has_color_support()
-{
-    static $support;
-
-    if (null === $support) {
-        if (DIRECTORY_SEPARATOR == '\\') {
-            $support = false !== getenv('ANSICON') || 'ON' === getenv('ConEmuANSI');
-        } else {
-            $support = function_exists('posix_isatty') && @posix_isatty(STDOUT);
-        }
-    }
-
-    return $support;
-}
+var_dump(shell_exec($importCommands));

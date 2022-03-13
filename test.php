@@ -5,7 +5,7 @@ require_once dirname(__FILE__).'/Wordle.php';
 
 
 $wordsToTest = [
-	"REBUT", "SISSY", "HUMPH", "AWAKE", "BLUSH", "FOCAL", "EVADE", "NAVAL", "SERVE", "HEATH", "DWARF", "MODEL"
+	"SISSY", "HUMPH", "AWAKE", "BLUSH", "FOCAL", "EVADE", "NAVAL", "SERVE", "HEATH", "DWARF", "MODEL"
 ];
 
 class TestResult

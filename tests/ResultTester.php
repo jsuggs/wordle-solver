@@ -23,6 +23,7 @@ $testCases = [
 	new TestCase('PAPER', 'EVERY', 'WNWWN'),
 	new TestCase('PAINT', 'PAPER', 'CCWNN'),
 	new TestCase('HUMPH', 'WHICH', 'NWNNC'),
+	new TestCase('SISSY', 'SHIPS', 'CNWNW'),
 ];
 
 foreach ($testCases as $testCase) {

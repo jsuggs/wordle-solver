@@ -128,9 +128,8 @@ abstract class DatabaseStrategy extends Strategy
 
 	public function guess(Wordle $wordle) : Guess
 	{
-		$qb = new QueryBuilder();
-		$query = $qb->getQuery($wordle, $this->getFieldName());
-
+		$query = $this->getQuery($wordle);
+		// This may change to allow for more than one result to come back, along w metadata
 		$word = $this->database->exeuteWordQuery($query);
 
 		if (!$word) {
@@ -142,16 +141,23 @@ abstract class DatabaseStrategy extends Strategy
 		return $guess;
 	}
 
-	abstract protected function getFieldName() : string;
+	abstract protected function getQuery(Wordle $wordle) : string;
 }
 
 class FrequencyStrategy extends DatabaseStrategy
 {
-	private const FIELD_NAME = 'frequency';
-
-	protected function getFieldName() : string
+	protected function getQuery(Wordle $wordle) : string
 	{
-		return self::FIELD_NAME;
+		$qb = new QueryBuilder();
+
+		// Let's go with a brute force approach first.
+		$sql = 'SELECT w.word FROM words w INNER JOIN frequency f ON w.word = f.word WHERE 1 == 1 ';
+		$sql .= $qb->getStandardQuery($wordle);
+
+		$sql .= ' ORDER BY f.frequency LIMIT 1';
+		var_dump($sql);
+
+		return $sql;
 	}
 }
 
@@ -183,13 +189,11 @@ class StrategyDecider
 
 class QueryBuilder
 {
-	public function getQuery(Wordle $wordle, string $fieldName) : string
+	public function getStandardQuery(Wordle $wordle) : string
 	{
-		// Let's go with a brute force approach first.
-		$sql = 'SELECT word FROM words WHERE 1 == 1 ';
-
 		$stats = $wordle->getStats();
 		//var_dump($stats);
+		$sql = '';
 
 		// Build out the inclusion and exclusions based on the results we have made so far
 		foreach (Wordle::$indexes as $idx) {
@@ -210,7 +214,7 @@ class QueryBuilder
 		}
 
 		// Make sure that the word uses letters that are in the wrong place
-		foreach ($stats['WRONG_LOCATION']['INDEX'] as $index => $letters) {
+		foreach ($stats['WRONG_LOCATION']['INDEX'] ?? [] as $index => $letters) {
 			$potentialLocations = array_diff(Wordle::$indexes, [$index], array_keys($stats['CORRECT_LETTERS']['INDEXES'] ?? []));
 			foreach ($letters as $letter) {
 				$alternateindexeSql = implode(' OR ', array_map(function($index) use ($letter) {
@@ -221,14 +225,8 @@ class QueryBuilder
 			}
 		}
 
-		$sql .= sprintf(' ORDER BY %s LIMIT 1', $fieldName);
-
-		var_dump($sql);
-
 		return $sql;
 	}
-
-	
 
 	private static function letterList(array $letters)
 	{
@@ -287,7 +285,7 @@ class ResultTester
 				$numLettersInWord = substr_count($word, $guess{$idx - 1});
 
 				// So if the letter is in the word, but not too many times
-				if ($numLettersInWord > 0 && $numLetterInGuess >= $numLettersInWord) {
+				if ($numLettersInWord > 0 ) {
 					$value = Result::WRONG_LOCATION;
 				}
 				//var_dump($word, $guess, $idx, $guess{$idx - 1}, $numLettersInWord, $numLetterInGuess);
