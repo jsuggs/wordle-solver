@@ -21,9 +21,11 @@ class Wordle
 					$stats['NOT_FOUND_LETTERS']['INDEX'][$idx] = $letter;
 				} elseif ($resultValue == Result::CORRECT) {
 					$stats['CORRECT_LETTERS'][$idx] = $letter;
+					$stats['CORRECT_LETTERS']['LETTERS'][$letter] = 1;
+					$stats['CORRECT_LETTERS']['INDEXES'][$idx] = 1;
 				} elseif ($resultValue == Result::WRONG_LOCATION) {
 					$stats['WRONG_LOCATION']['INDEX'][$idx][] = $letter;
-					$stats['WRONG_LOCATION']['LETTERS'][$letter] = $idx;
+					$stats['WRONG_LOCATION']['LETTERS'][$letter][] = $idx;
 				}
 			}
 		}
@@ -181,23 +183,18 @@ class QueryBuilder
 				$sql .= sprintf(' AND c%d NOT IN (%s)', $idx, $wrongLetterList);
 			}
 		}
-		/*
 
-		// Make sure that the word has letters that are in the wrong place
-		// Note: I think double letters is going to have to be refactored here
-		foreach ($wrongLocationLetters as $wrongindexe => $letters) {
+		// Make sure that the word uses letters that are in the wrong place
+		foreach ($stats['WRONG_LOCATION']['INDEX'] as $index => $letters) {
+			$potentialLocations = array_diff(Wordle::$indexes, [$index], array_keys($stats['CORRECT_LETTERS']['INDEXES']));
 			foreach ($letters as $letter) {
-				$potentialLocations = array_diff(self::$indexes, [$wrongindexe]);
-
-				$alternateindexeSql = implode(' OR ', array_map(function($indexe) use ($letter) {
-					// TODO: This is wrong, only using one of the letters
-					return sprintf("c%d = '%s'", $indexe, $letter);
+				$alternateindexeSql = implode(' OR ', array_map(function($index) use ($letter) {
+					return sprintf("c%d = '%s'", $index, $letter);
 				}, $potentialLocations));
 
 				$sql .= sprintf(' AND (%s)', $alternateindexeSql);
 			}
 		}
-		*/
 
 		$sql .= sprintf(' ORDER BY %s LIMIT 1', $fieldName);
 
@@ -238,9 +235,6 @@ class InputMapper
 			$result->c5 = $data['c5'];	
 			$wordle->results[] = $result;
 		}
-
-		//var_dump($json);
-		var_dump($wordle);
 
 		return $wordle;
 	}
