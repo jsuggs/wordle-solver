@@ -20,8 +20,12 @@ https://github.com/DevangThakkar/wordle_archive/blob/master/src/data/words.js
 Ok, basic handling of correct and not found letters.  Now its time to put in the wrong location logic.
 Now, need to make sure that if letters are in the wrong place, that we limit to words that have those letters.
 
-### TODO
-Not taking into consideration double letters at the moment.
 
 ## Day Two
 Going to focus on test, then maybe a larger dataset of words.  Finally, starting to look into some stats if time permits.  Bonus work may be to build a UI to help test things out.
+
+I've got all 5 letter words in the database, so check.  I'm taking some shortcuts, but I have a slightly better way of looking at what strategy to take (still no numbers/facts to show use, just some hard coded stuff based on gut/testing)
+
+
+## Setup
+Not at a place to really share this at the moment.  But what I've got now relies on PHP7 with SQLITE3 extensions being installed.  Goal is to streamline this a bit more, potentially utilize some more collaborative choices.
