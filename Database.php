@@ -13,17 +13,13 @@ CREATE TABLE words (
 	frequency UNSIGNED TINY INT
 )
 SQL;
+	private const DB_FILE = 'words.db';
 
 	private $conn;
 
-	public function __construct(string $dbFile)
+	public function __construct()
 	{
-		$this->conn = new SQLITE3($dbFile);
-		//$this->createSchema();
-
-		/*if (!file_exists($dbFile)){
-			$this->createSchema();
-		}*/
+		$this->conn = new SQLITE3(self::DB_FILE);
 	}
 
 	public function createSchema()
@@ -55,7 +51,7 @@ SQL;
 
 		$fh = fopen($filename, 'r');
 		$frequency = 0;
-		while ($word = fgets($fh)) {
+		while ($word = rtrim(fgets($fh))) {
 			$stmt->bindValue(':word', strtoupper($word));
 			$stmt->bindValue(':c1', strtoupper($word{0}));
 			$stmt->bindValue(':c2', strtoupper($word{1}));

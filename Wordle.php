@@ -34,7 +34,7 @@ class Wordle
 
 	public function getGuesses() {
 		return array_map(function($result) {
-			return $return['word'];
+			return $result->word;
 		}, $this->results);
 	}
 }
@@ -46,6 +46,7 @@ class Result
 	public const WRONG_LOCATION = 'W';
 
 	public $c1, $c2, $c3, $c4, $c5;
+	public $word;
 
 	public static function fromMask(string $mask) : Result
 	{
@@ -62,6 +63,11 @@ class Result
 	{
 		return $this->c1 . $this->c2 . $this->c3 . $this->c4 . $this->c5;
 	}
+
+	public function isCorrect() : bool
+	{
+		return 'CCCCC' === strval($this);
+	}
 }
 
 class Guess
@@ -76,20 +82,18 @@ class Guess
 
 class Solver
 {
-	private Wordle $wordle;
 	private Database $database;
 
-	public function __construct(Wordle $wordle, Database $database)
+	public function __construct(Database $database)
 	{
-		$this->wordle = $wordle;
 		$this->database = $database;
 	}
 
-	public function solve() : Guess
+	public function solve(Wordle $wordle) : Guess
 	{
-		$primaryStrategy = StrategyDecider::getPrimaryStrategy($this->wordle, $this->database);
+		$primaryStrategy = StrategyDecider::getPrimaryStrategy($wordle, $this->database);
 
-		$guess = $primaryStrategy->guess($this->wordle);
+		$guess = $primaryStrategy->guess($wordle);
 
 		if (!$guess) {
 			// Fallback Strategy?
@@ -185,7 +189,7 @@ class QueryBuilder
 		$sql = 'SELECT word FROM words WHERE 1 == 1 ';
 
 		$stats = $wordle->getStats();
-		var_dump($stats);
+		//var_dump($stats);
 
 		// Build out the inclusion and exclusions based on the results we have made so far
 		foreach (Wordle::$indexes as $idx) {
@@ -207,7 +211,7 @@ class QueryBuilder
 
 		// Make sure that the word uses letters that are in the wrong place
 		foreach ($stats['WRONG_LOCATION']['INDEX'] as $index => $letters) {
-			$potentialLocations = array_diff(Wordle::$indexes, [$index], array_keys($stats['CORRECT_LETTERS']['INDEXES']));
+			$potentialLocations = array_diff(Wordle::$indexes, [$index], array_keys($stats['CORRECT_LETTERS']['INDEXES'] ?? []));
 			foreach ($letters as $letter) {
 				$alternateindexeSql = implode(' OR ', array_map(function($index) use ($letter) {
 					return sprintf("c%d = '%s'", $index, $letter);
@@ -254,13 +258,8 @@ class InputMapper
 
 		$wordle = new Wordle();
 		foreach ($json['results'] as $data) {
-			$result = new Result();
+			$result = Result::fromMask($data['result']);
 			$result->word = $data['word'];
-			$result->c1 = $data['c1'];
-			$result->c2 = $data['c2'];
-			$result->c3 = $data['c3'];
-			$result->c4 = $data['c4'];
-			$result->c5 = $data['c5'];	
 			$wordle->results[] = $result;
 		}
 
@@ -273,6 +272,7 @@ class ResultTester
 	public static function getGuessResult(string $word, string $guess) : Result
 	{
 		$result = new Result();
+		$result->word = $guess;
 
 		foreach (Wordle::$indexes as $idx) {
 			$resultProp = sprintf('c%d', $idx);
@@ -287,7 +287,7 @@ class ResultTester
 				$numLettersInWord = substr_count($word, $guess{$idx - 1});
 
 				// So if the letter is in the word, but not too many times
-				if ($numLettersInWord > 0 && $numLettersInWord >= $numLetterInGuess) {
+				if ($numLettersInWord > 0 && $numLetterInGuess >= $numLettersInWord) {
 					$value = Result::WRONG_LOCATION;
 				}
 				//var_dump($word, $guess, $idx, $guess{$idx - 1}, $numLettersInWord, $numLetterInGuess);

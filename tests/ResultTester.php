@@ -13,18 +13,20 @@ class TestCase
 		$this->word = $word;
 		$this->guess = $guess;
 		$this->expectation = Result::fromMask($expectation);
+		$this->expectation->word = $guess;
 	}
 }
 
 $testCases = [
 	new TestCase('PAINT', 'STONE', 'NWNCN'),
-	new TestCase('PAPER', 'PAPPY', 'CCCNN'),
-	new TestCase('PAINT', 'PAPER', 'CCNNN')
+	new TestCase('PAPER', 'PAPPY', 'CCCWN'),
+	new TestCase('PAPER', 'EVERY', 'WNWWN'),
+	new TestCase('PAINT', 'PAPER', 'CCWNN'),
+	new TestCase('HUMPH', 'WHICH', 'NWNNC'),
 ];
 
 foreach ($testCases as $testCase) {
 	$result = ResultTester::getGuessResult($testCase->word, $testCase->guess);
-
 	if ($result != $testCase->expectation) {
 		$error = sprintf('Word: %s, Guess: %s, Expected: %s, Got: %s', $testCase->word, $testCase->guess, $testCase->expectation, $result);
 		echo "Error: $error\n";

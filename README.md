@@ -10,8 +10,11 @@ I'm going to start with a common 5 letter word list.  The top X common words, or
 Based on the progression of the choices, I'll use an algorithm that decides what "strategy" should be used.  First thought is that each word will have some metrics/statistics (TBD) that can be attributed to it.  As the techniques get more advanced, I'll see where that leads...but start simple.
 
 ## Words
-I'm going to start with this list I found here
+I'm going to start with this list I found here.  I'm going to use this as a separate dataset for frequency
 https://www-cs-faculty.stanford.edu/~knuth/sgb-words.txt
+
+Here's the word list as the wordle archive says
+https://github.com/DevangThakkar/wordle_archive/blob/master/src/data/words.js
 
 ## Algorithm notes
 Ok, basic handling of correct and not found letters.  Now its time to put in the wrong location logic.
