@@ -36,3 +36,5 @@ Wordle can seem hard, but kinda like Deep Blue (note, I am *NOT* trying to say s
 I'm pretty certain I can take this further, and I may.  Given the fact that the state space is small enough and static, the "solution" can become objective.  I can see this going in the way optimization, both in the efficiency of algorithm, but also in code.  My first passes are just a progression of getting something working, mixed in with some "ideas" but then caught up with "lets just get something working".
 
 Finally, I hope that this helps to document a bit about how I go about problem solving.  I may not be the smatest, or have the most efficient algorithms.  However, I like to attack a problem, even if its weird or wrong or imprecise.  Then I refine it.
+
+Looks like I've got a good foundation.  Most are found under 6, but a few take 7.  Going to start looking into the data a bit more.

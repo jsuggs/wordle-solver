@@ -49,7 +49,7 @@ class Stats
 
 	public function getExcludedLetters() : array
 	{
-		return array_keys($this->data['NOT_FOUND_LETTERS']['LETTERS']);
+		return array_keys($this->data['NOT_FOUND_LETTERS']['LETTERS'] ?? []);
 	}
 
 	public function addCorrectLetter(int $idx, string $letter)
@@ -243,7 +243,7 @@ class LetterReductionStrategy extends DatabaseStrategy
 		$stats = $wordle->getStats();
 		$knownLetters = $stats->getCorrectLetters();
 		$exclusionQuery = QueryBuilder::getExclusionQuery($stats);
-		var_dump($knownLetters);
+		//var_dump($knownLetters);
 
 		$distributions = [];
 		foreach (Wordle::$indexes as $idx) {
@@ -363,8 +363,9 @@ class StrategyDecider
 		if ($numGuesses === 0)  {
 			return new StartingStrategy;
 		}
+		return new LetterReductionStrategy($database);
 
-		if ($numGuesses < 3 && $stats->getUnknownPositions() > 3) {
+		if ($numGuesses < 4 && $stats->getUnknownPositions() > 3) {
 			return new LetterReductionStrategy($database);
 		}
 
@@ -414,6 +415,7 @@ class QueryBuilder
 				$sql .= sprintf(' AND (%s)', $alternateindexeSql);
 			}
 		}
+		//var_dump($sql)
 
 		return $sql;
 	}
