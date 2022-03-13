@@ -39,7 +39,7 @@ SQL;
 		return self::DB_FILE;
 	}
 
-	public function exeuteWordQuery(string $query) : ?string
+	public function executeWordQuery(string $query) : ?string
 	{
 		$query = $this->conn->query($query);
 
@@ -50,11 +50,16 @@ SQL;
 			: null;
 	}
 
-	public function importFileIntoTable(string $table, string $filename)
+	public function executeQuery(string $query) : array
 	{
-		$sql = sprintf('.import %s %s;', $filename, $table);
+		$query = $this->conn->query($query);
+		$data = [];
 
-		$this->conn->exec($sql);
+		while ($row = $query->fetchArray(SQLITE3_ASSOC)) {
+			$data[] = $row;
+		}
+
+		return $data;
 	}
 
 	private function getConnection()

@@ -46,7 +46,7 @@ class Stats
 
 	public function addNotFoundLetter(int $idx, string $letter)
 	{
-		$this->data['NOT_FOUND_LETTERS']['LETTERS'][$letter] = ($stats['NOT_FOUND_LETTERS']['LETTERS'][$letter] ?? 0) + 1;
+		$this->data['NOT_FOUND_LETTERS']['LETTERS'][$letter] = ($this->data['NOT_FOUND_LETTERS']['LETTERS'][$letter] ?? 0) + 1;
 		$this->data['NOT_FOUND_LETTERS']['INDEX'][$idx] = $letter;
 	}
 
@@ -86,6 +86,18 @@ class Stats
 	public function getWrongLocationLetters() : array
 	{
 		return $stats['WRONG_LOCATION']['INDEX'] ?? [];
+	}
+
+	public function getUnknownLetters() : array
+	{
+		//
+	}
+
+	public function getUnknownPositions()
+	{
+		$numCorrectLetters = count($this->getCorrectLetters());
+
+		return 5 - $numCorrectLetters;
 	}
 }
 
@@ -169,7 +181,7 @@ class FallBackStrategy extends Strategy
 
 abstract class DatabaseStrategy extends Strategy
 {
-	private Database $database;
+	protected Database $database;
 
 	public function __construct(Database $database)
 	{
@@ -178,9 +190,9 @@ abstract class DatabaseStrategy extends Strategy
 
 	public function guess(Wordle $wordle) : Guess
 	{
-		$query = $this->getQuery($wordle);
+		$query = $this->getQuery($wordle->getStats());
 		// This may change to allow for more than one result to come back, along w metadata
-		$word = $this->database->exeuteWordQuery($query);
+		$word = $this->database->executeWordQuery($query);
 
 		if (!$word) {
 			throw new Exception('No Guess');
@@ -191,18 +203,26 @@ abstract class DatabaseStrategy extends Strategy
 		return $guess;
 	}
 
-	abstract protected function getQuery(Wordle $wordle) : string;
+	protected function checkIfWordExist(Stats $stats) : string
+	{
+		//
+		$sql = 'SELECT w.word FROM words w WHERE 1 == 1 ';
+		$sql .= QueryBuilder::getExclusionQuery($stats);
+
+		return $this->database->executeWordQuery($sql);
+	}
+
+	abstract protected function getQuery(Stats $stats) : string;
 }
 
 class FrequencyStrategy extends DatabaseStrategy
 {
-	protected function getQuery(Wordle $wordle) : string
+	protected function getQuery(Stats $stats) : string
 	{
 		// Let's go with a brute force approach first.
 		$sql = 'SELECT w.word FROM words w INNER JOIN frequency f ON w.word = f.word WHERE 1 == 1 ';
-		$sql .= QueryBuilder::getStandardQuery($wordle);
+		$sql .= QueryBuilder::getExclusionQuery($stats);
 		$sql .= ' ORDER BY f.frequency LIMIT 1';
-		var_dump($sql);
 
 		return $sql;
 	}
@@ -211,24 +231,109 @@ class FrequencyStrategy extends DatabaseStrategy
 class LetterReductionStrategy extends DatabaseStrategy
 {
 	// The goal of this strategy is to eliminate letters
-	protected function getQuery(Wordle $wordle) : string
+	public function guess(Wordle $wordle) : Guess
 	{
 		$stats = $wordle->getStats();
+		$knownLetters = $stats->getCorrectLetters();
+		$exclusionQuery = QueryBuilder::getExclusionQuery($stats);
+		var_dump($knownLetters);
+
+		$distributions = [];
+		foreach (Wordle::$indexes as $idx) {
+			$distributions[$idx] = $this->getLetterDistribution($idx, [], $exclusionQuery);
+		}
+		$countByIndex = $this->getCountByIndex($distributions);
+
+		// Start off with a more simple algorithm.  Just pick the single letter with highest number of words.
+		// Can expand this logic later.  A hack for now.
+		//var_dump($countByIndex);die();
+		$mostPoularIndex = $this->getMostPopularIndex($countByIndex);
+
+		$newStats = clone $stats;
+		$newStats->addCorrectLetter($mostPoularIndex['idx'], $mostPoularIndex['letter']);
+
+		/*
+
+		// Try to find a word that has the most letters, keep reducing
+		$numLettersToTry = count($countByIndex);
+		while ($numLettersToTry > 1) {
+			// Try to find a word that has the most of the letters
+			$depth = 3;
+			$this->trytoFindWord();
+			// This is the start of the hack of the stats.
+			// Put in some new data, see what comes back.
+			$numLettersToTry--;
+		} 
+		*/
 
 		// Get the positions that are NOT known and the letters that are NOT known
 		$sql = 'SELECT w.word FROM words w WHERE 1 == 1 ';
-		$sql .= QueryBuilder::getStandardQuery($wordle);
-		var_dump($sql);
+		$sql .= QueryBuilder::getExclusionQuery($newStats);
 
-		return $sql;
+		$word = $this->database->executeWordQuery($sql);
+
+		if (!$word) {
+			throw new Exception('No Guess');
+		}
+
+		$guess = new Guess($word);
+
+		return $guess;
+	}
+	protected function getQuery(Stats $stats) : string
+	{
+		return 'TODO: think about class structure';
 	}
 
-	protected function getLetterDistribution(int $column, array $known)
+	protected function getLetterDistribution(int $column, array $known, string $exclusionQuery)
 	{
-		$sql = sprintf("SELECT c%d, COUNT(*) AS num_words FROM words %s");
+		$sql = sprintf("SELECT c%d AS letter, COUNT(*) AS num_words FROM words WHERE 1=1 %s", $column, $exclusionQuery);
 		$sql .= sprintf(" GROUP BY c%d ORDER BY num_words DESC", $column);
 
-		return $sql;
+		$data = $this->database->executeQuery($sql);
+
+		return $data;
+	}
+
+	protected function getCountByIndex(array $distributions) : array
+	{
+		$data = [];
+
+		foreach ($distributions as $idx => $distributionList) {
+			$max = 0;
+			foreach ($distributionList as $distribution) {
+				$data[$idx][$distribution['letter']] = $distribution['num_words'];
+				/*
+				var_dump($distribution);
+				if ($distribution['num_words'] > $max) {
+					$max = $distribution['num_words'];
+					$topDistributions[$idx] = $distribution['letter'];
+				}*/
+			}
+		}
+
+		return $data;
+	}
+
+	protected function getMostPopularIndex(array $countByIndex)
+	{
+		$max = 0;
+		$result = [];
+
+		foreach ($countByIndex as $idx => $list) {
+			// php hack for getting key/value of first element in the list
+			$popularity = reset($list);
+			$letter = array_key_first($list);
+			if ($popularity > $max) {
+				$max = $popularity;
+				$result = [
+					'idx' => $idx,
+					'letter' => $letter,
+				];
+			}
+		}
+
+		return $result;
 	}
 }
 
@@ -253,9 +358,9 @@ class StrategyDecider
 
 		$stats = $wordle->getStats();
 
-		/*if ($numGuesses < 3 && $stats->getUnknownLetters() > 10) {
+		if ($numGuesses < 3 && $stats->getUnknownPositions() > 3) {
 			return new LetterReductionStrategy($database);
-		}*/
+		}
 
 		return new FrequencyStrategy($database);
 	}
@@ -268,10 +373,8 @@ class StrategyDecider
 
 class QueryBuilder
 {
-	public static function getStandardQuery(Wordle $wordle) : string
+	public static function getExclusionQuery(Stats $stats) : string
 	{
-		$stats = $wordle->getStats();
-		//var_dump($stats);
 		$sql = '';
 
 		// Build out the inclusion and exclusions based on the results we have made so far
