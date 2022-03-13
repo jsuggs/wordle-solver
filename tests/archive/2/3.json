@@ -1,0 +1,33 @@
+{
+	"guesses": [
+		"STONE",
+		"THEIR",
+		"EXTRA"
+	],
+	"results": [
+		{
+			"word": "STONE",
+			"c1": "N",
+			"c2": "W",
+			"c3": "N",
+			"c4": "N",
+			"c5": "W"
+		},
+		{
+			"word": "THEIR",
+			"c1": "W",
+			"c2": "N",
+			"c3": "W",
+			"c4": "N",
+			"c5": "W"
+		},
+		{
+			"word": "EXTRA",
+			"c1": "W",
+			"c2": "N",
+			"c3": "W",
+			"c4": "W",
+			"c5": "N"
+		}
+	]
+}

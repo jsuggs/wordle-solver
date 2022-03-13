@@ -4,6 +4,32 @@ class Wordle
 {
 	public array $guesses = [];
 	public array $results = [];
+	public static $indexes = [1,2,3,4,5];
+
+	public function getStats() : array
+	{
+		$stats = [];
+		$notFoundLetters = [];
+		foreach ($this->results as $result) {
+			foreach (self::$indexes as $idx) {
+				$wordIdx = $idx - 1;
+				$resultProp = sprintf('c%d', $idx);
+				$resultValue = $result->{$resultProp};
+				$letter = $result->word{$wordIdx};
+				if ($resultValue == Result::NOT_FOUND) {
+					$stats['NOT_FOUND_LETTERS']['LETTERS'][$letter] = ($stats['NOT_FOUND_LETTERS']['LETTERS'][$letter] ?? 0) + 1;
+					$stats['NOT_FOUND_LETTERS']['INDEX'][$idx] = $letter;
+				} elseif ($resultValue == Result::CORRECT) {
+					$stats['CORRECT_LETTERS'][$idx] = $letter;
+				} elseif ($resultValue == Result::WRONG_LOCATION) {
+					$stats['WRONG_LOCATION']['INDEX'][$idx][] = $letter;
+					$stats['WRONG_LOCATION']['LETTERS'][$letter] = $idx;
+				}
+			}
+		}
+		
+		return $stats;
+	}
 }
 
 class Result
@@ -130,150 +156,57 @@ class StrategyDecider
 
 class QueryBuilder
 {
-	private $c1Clause, $c2Clause;
-	private static $positions = [1,2,3,4,5];
-
 	public function getQuery(Wordle $wordle, string $fieldName) : string
 	{
 		// Let's go with a brute force approach first.
 		$sql = 'SELECT word FROM words WHERE 1 == 1 ';
 
-		list($notFoundLetterPositions, $notFoundLetters, $notFoundLetterCount) = $this->getNotFoundLetters($wordle);
-		$correctLetters = $this->getCorrectLetters($wordle);
-		$wrongLocationLetters = $this->getWrongLocationLetters($wordle);
-		//var_dump($notFoundLetters, $notFoundLetterPositions, $wrongLocationLetters);
+		$stats = $wordle->getStats();
+		var_dump($stats);
 
 		// Build out the inclusion and exclusions based on the results we have made so far
-		foreach (self::$positions as $position) {
+		foreach (Wordle::$indexes as $idx) {
 			// If the letter is correct, use it
-			if (isset($correctLetters[$position])) {
-				$sql .= sprintf(" AND c%d = '%s'", $position, $correctLetters[$position]);
+			if (isset($stats['CORRECT_LETTERS'][$idx])) {
+				$sql .= sprintf(" AND c%d = '%s'", $idx, $stats['CORRECT_LETTERS'][$idx]);
 			} else {
-				var_dump($position,$notFoundLetterPositions[$position], $wrongLocationLetters[$position]);
 				// Always exclude the letters that aren't in the word all together
+				$excludedLetters = array_keys($stats['NOT_FOUND_LETTERS']['LETTERS']);
 				// Contionally exclude the words with letters that aren't in the right place
-				// Unless there are more than one letter
-				// See if we can figure out if a letter is already accounted for
-				// Do a count
-				// always not found
+				if (isset($stats['WRONG_LOCATION']['INDEX'][$idx])) {
+					$excludedLetters = array_merge($excludedLetters, $stats['WRONG_LOCATION']['INDEX'][$idx]);
+				}
 
-				$excludedPositionalLetters = $notFoundLetters;
-				$excludedPositionalLetters = (isset($wrongLocationLetters[$position]))
-					? array_unique(array_merge($notFoundLetters, $notFoundLetterPositions[$position], $wrongLocationLetters[$position]))
-					: $notFoundLetters;
-
-				$wrongLetterList = self::letterList($excludedPositionalLetters);
-				$sql .= sprintf(' AND c%d NOT IN (%s)', $position, $wrongLetterList);
+				$wrongLetterList = self::letterList($excludedLetters);
+				$sql .= sprintf(' AND c%d NOT IN (%s)', $idx, $wrongLetterList);
 			}
 		}
+		/*
 
 		// Make sure that the word has letters that are in the wrong place
 		// Note: I think double letters is going to have to be refactored here
-		foreach ($wrongLocationLetters as $wrongPosition => $letters) {
+		foreach ($wrongLocationLetters as $wrongindexe => $letters) {
 			foreach ($letters as $letter) {
-				$potentialLocations = array_diff(self::$positions, [$wrongPosition]);
+				$potentialLocations = array_diff(self::$indexes, [$wrongindexe]);
 
-				$alternatePositionSql = implode(' OR ', array_map(function($position) use ($letter) {
+				$alternateindexeSql = implode(' OR ', array_map(function($indexe) use ($letter) {
 					// TODO: This is wrong, only using one of the letters
-					return sprintf("c%d = '%s'", $position, $letter);
+					return sprintf("c%d = '%s'", $indexe, $letter);
 				}, $potentialLocations));
 
-				$sql .= sprintf(' AND (%s)', $alternatePositionSql);
+				$sql .= sprintf(' AND (%s)', $alternateindexeSql);
 			}
 		}
+		*/
 
 		$sql .= sprintf(' ORDER BY %s LIMIT 1', $fieldName);
 
 		var_dump($sql);
-		var_dump($notFoundLetterCount);
 
 		return $sql;
 	}
 
-	private function getNotFoundLetters(Wordle $wordle) : array
-	{
-		$notFoundLetterPositions = $notFoundLetters = $notFoundLetterCount = [];
-
-		foreach ($wordle->results as $result) {
-			if ($result->c1 == Result::NOT_FOUND) {
-				$notFoundLetterPositions[1][] = $result->word{0};
-				$notFoundLetters[] = $result->word{0};
-				$notFoundLetterCount[$result->word{0}]++;
-			}
-			if ($result->c2 == Result::NOT_FOUND) {
-				$notFoundLetterPositions[2][] = $result->word{1};
-				$notFoundLetters[] = $result->word{1};
-				$notFoundLetterCount[$result->word{1}]++;
-			}
-			if ($result->c3 == Result::NOT_FOUND) {
-				$notFoundLetterPositions[3][] = $result->word{2};
-				$notFoundLetters[] = $result->word{2};
-				$notFoundLetterCount[$result->word{2}]++;
-			}
-			if ($result->c4 == Result::NOT_FOUND) {
-				$notFoundLetterPositions[4][] = $result->word{3};
-				$notFoundLetters[] = $result->word{3};
-				$notFoundLetterCount[$result->word{3}]++;
-			}
-			if ($result->c5 == Result::NOT_FOUND) {
-				$notFoundLetterPositions[5][] = $result->word{4};
-				$notFoundLetters[] = $result->word{4};
-				$notFoundLetterCount[$result->word{4}]++;
-			}
-		}
-
-		return [$notFoundLetterPositions, array_unique($notFoundLetters), $notFoundLetterCount];
-	}
-
-	private function getWrongLocationLetters(Wordle $wordle) : array
-	{
-		$wrongLocationLetters = [];
-
-		foreach ($wordle->results as $result) {
-			if ($result->c1 == Result::WRONG_LOCATION) {
-				$wrongLocationLetters[1][] = $result->word{0};
-			}
-			if ($result->c2 == Result::WRONG_LOCATION) {
-				$wrongLocationLetters[2][] = $result->word{1};
-			}
-			if ($result->c3 == Result::WRONG_LOCATION) {
-				$wrongLocationLetters[3][] = $result->word{2};
-			}
-			if ($result->c4 == Result::WRONG_LOCATION) {
-				$wrongLocationLetters[4][] = $result->word{3};
-			}
-			if ($result->c5 == Result::WRONG_LOCATION) {
-				$wrongLocationLetters[5][] = $result->word{4};
-			}
-		}
-
-		return $wrongLocationLetters;
-	}
-
-	private function getCorrectLetters(Wordle $wordle) : array
-	{
-		$correctLetters = [];
-
-		foreach ($wordle->results as $result) {
-			if ($result->c1 == Result::CORRECT) {
-				$correctLetters[1] = $result->word{0};
-			}
-			if ($result->c2 == Result::CORRECT) {
-				$correctLetters[2] = $result->word{1};
-			}
-			if ($result->c3 == Result::CORRECT) {
-				$correctLetters[3] = $result->word{2};
-			}
-			if ($result->c4 == Result::CORRECT) {
-				$correctLetters[4] = $result->word{3};
-			}
-			if ($result->c5 == Result::CORRECT) {
-				$correctLetters[5] = $result->word{4};
-			}
-		}
-
-		return $correctLetters;
-	}
+	
 
 	private static function letterList(array $letters)
 	{
