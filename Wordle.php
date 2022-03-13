@@ -15,6 +15,7 @@ class Wordle
 	private function buildStats() : Stats
 	{
 		$stats = new Stats();
+		$resultCount = 0;
 		foreach ($this->results as $result) {
 			foreach (self::$indexes as $idx) {
 				$resultValue = $result->{sprintf('c%d', $idx)};
@@ -27,22 +28,18 @@ class Wordle
 					$stats->addWrongLocationLetter($idx, $letter);
 				}
 			}
+			$resultCount++;
 		}
+		$stats->setResultCount($resultCount);
 		
 		return $stats;
-	}
-
-	public function getGuesses() : array
-	{
-		return array_map(function($result) {
-			return $result->word;
-		}, $this->results);
 	}
 }
 
 class Stats
 {
 	private array $data;
+	private int $resultCount;
 
 	public function addNotFoundLetter(int $idx, string $letter)
 	{
@@ -98,6 +95,16 @@ class Stats
 		$numCorrectLetters = count($this->getCorrectLetters());
 
 		return 5 - $numCorrectLetters;
+	}
+
+	public function setResultCount(int $resultCount)
+	{
+		$this->resultCount = $resultCount;
+	}
+
+	public function getResultCount()
+	{
+		return $this->resultCount;
 	}
 }
 
@@ -349,14 +356,13 @@ class StrategyDecider
 {
 	public static function getPrimaryStrategy(Wordle $wordle, Database $database) : Strategy
 	{
-		$numGuesses = count($wordle->getGuesses());
+		$stats = $wordle->getStats();
+		$numGuesses = $stats->getResultCount();
 
 		// Basic logic for determining which strategy to use.
 		if ($numGuesses === 0)  {
 			return new StartingStrategy;
 		}
-
-		$stats = $wordle->getStats();
 
 		if ($numGuesses < 3 && $stats->getUnknownPositions() > 3) {
 			return new LetterReductionStrategy($database);
