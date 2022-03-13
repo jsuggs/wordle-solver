@@ -2,7 +2,6 @@
 
 class Wordle
 {
-	public array $guesses = [];
 	public array $results = [];
 	public static $indexes = [1,2,3,4,5];
 
@@ -31,6 +30,12 @@ class Wordle
 		}
 		
 		return $stats;
+	}
+
+	public function getGuesses() {
+		return array_map(function($result) {
+			return $return['word'];
+		}, $this->results);
 	}
 }
 
@@ -143,7 +148,7 @@ class StrategyDecider
 	public static function getPrimaryStrategy(Wordle $wordle, Database $database) : Strategy
 	{
 		// Basic logic for determining which strategy to use.
-		if (count($wordle->guesses) == 0)  {
+		if (count($wordle->getGuesses()) == 0)  {
 			return new StartingStrategy;
 		}
 
@@ -221,10 +226,17 @@ class InputMapper
 			throw new Exception(sprintf('File %s does not exist', $filename));
 		}
 
-		$json = json_decode(file_get_contents($filename), true);
+		$data = file_get_contents($filename);
+
+		return $this->mapJson($data);
+		
+	}
+
+	public function mapJson(string $data) : Wordle
+	{
+		$json = json_decode($data, true);
 
 		$wordle = new Wordle();
-		$wordle->guesses = $json['guesses'];
 		foreach ($json['results'] as $data) {
 			$result = new Result();
 			$result->word = $data['word'];

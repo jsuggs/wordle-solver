@@ -19,3 +19,6 @@ Now, need to make sure that if letters are in the wrong place, that we limit to 
 
 ### TODO
 Not taking into consideration double letters at the moment.
+
+## Day Two
+Going to focus on test, then maybe a larger dataset of words.  Finally, starting to look into some stats if time permits.  Bonus work may be to build a UI to help test things out.
