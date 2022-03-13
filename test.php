@@ -36,7 +36,7 @@ class Tester
 		$guessNumber = 1;
 		$results = [];
 		$found = false;
-		$startTime = time();
+		$startTime = microtime(true);
 
 		while ($guessNumber <= self::MAX_GUESSES) {
 			// Setup the wordle
@@ -57,7 +57,7 @@ class Tester
 
 			$guessNumber++;
 		}
-		$endTime = time();
+		$endTime = microtime(true);
 
 		$totalTime = $endTime - $startTime;
 

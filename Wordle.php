@@ -4,27 +4,27 @@ class Wordle
 {
 	public array $results = [];
 	public static $indexes = [1,2,3,4,5];
+	private string $cacheKey;
 
-	public function getStats() : array
+	public function getStats() : Stats
 	{
-		$stats = [];
-		$notFoundLetters = [];
+		// Can cache the stats, so not rebuilt each time
+		return $this->buildStats();
+	}
+
+	private function buildStats() : Stats
+	{
+		$stats = new Stats();
 		foreach ($this->results as $result) {
 			foreach (self::$indexes as $idx) {
-				$wordIdx = $idx - 1;
-				$resultProp = sprintf('c%d', $idx);
-				$resultValue = $result->{$resultProp};
-				$letter = $result->word{$wordIdx};
+				$resultValue = $result->{sprintf('c%d', $idx)};
+				$letter = $result->word{$idx - 1};
 				if ($resultValue == Result::NOT_FOUND) {
-					$stats['NOT_FOUND_LETTERS']['LETTERS'][$letter] = ($stats['NOT_FOUND_LETTERS']['LETTERS'][$letter] ?? 0) + 1;
-					$stats['NOT_FOUND_LETTERS']['INDEX'][$idx] = $letter;
+					$stats->addNotFoundLetter($idx, $letter);
 				} elseif ($resultValue == Result::CORRECT) {
-					$stats['CORRECT_LETTERS'][$idx] = $letter;
-					$stats['CORRECT_LETTERS']['LETTERS'][$letter] = 1;
-					$stats['CORRECT_LETTERS']['INDEXES'][$idx] = 1;
+					$stats->addCorrectLetter($idx, $letter);
 				} elseif ($resultValue == Result::WRONG_LOCATION) {
-					$stats['WRONG_LOCATION']['INDEX'][$idx][] = $letter;
-					$stats['WRONG_LOCATION']['LETTERS'][$letter][] = $idx;
+					$stats->addWrongLocationLetter($idx, $letter);
 				}
 			}
 		}
@@ -32,10 +32,60 @@ class Wordle
 		return $stats;
 	}
 
-	public function getGuesses() {
+	public function getGuesses() : array
+	{
 		return array_map(function($result) {
 			return $result->word;
 		}, $this->results);
+	}
+}
+
+class Stats
+{
+	private array $data;
+
+	public function addNotFoundLetter(int $idx, string $letter)
+	{
+		$this->data['NOT_FOUND_LETTERS']['LETTERS'][$letter] = ($stats['NOT_FOUND_LETTERS']['LETTERS'][$letter] ?? 0) + 1;
+		$this->data['NOT_FOUND_LETTERS']['INDEX'][$idx] = $letter;
+	}
+
+	public function getExcludedLetters() : array
+	{
+		return array_keys($this->data['NOT_FOUND_LETTERS']['LETTERS']);
+	}
+
+	public function addCorrectLetter(int $idx, string $letter)
+	{
+		$this->data['CORRECT_LETTERS'][$idx] = $letter;
+		$this->data['CORRECT_LETTERS']['LETTERS'][$letter] = 1;
+		$this->data['CORRECT_LETTERS']['INDEXES'][$idx] = 1;
+	}
+
+	public function getCorrectLetters() : array
+	{
+		return $this->data['CORRECT_LETTERS'] ?? [];
+	}
+
+	public function getCorrectLetterForIndex(int $idx) : ?string
+	{
+		return $this->data['CORRECT_LETTERS'][$idx] ?? null;
+	}
+
+	public function addWrongLocationLetter(int $idx, string $letter)
+	{
+		$this->data['WRONG_LOCATION']['INDEX'][$idx][] = $letter;
+		$this->data['WRONG_LOCATION']['LETTERS'][$letter][] = $idx;
+	}
+
+	public function getWrongLocationLettersForIndex(int $idx) : array
+	{
+		return $this->data['WRONG_LOCATION']['INDEX'][$idx] ?? [];
+	}
+
+	public function getWrongLocationLetters() : array
+	{
+		return $stats['WRONG_LOCATION']['INDEX'] ?? [];
 	}
 }
 
@@ -148,14 +198,35 @@ class FrequencyStrategy extends DatabaseStrategy
 {
 	protected function getQuery(Wordle $wordle) : string
 	{
-		$qb = new QueryBuilder();
-
 		// Let's go with a brute force approach first.
 		$sql = 'SELECT w.word FROM words w INNER JOIN frequency f ON w.word = f.word WHERE 1 == 1 ';
-		$sql .= $qb->getStandardQuery($wordle);
-
+		$sql .= QueryBuilder::getStandardQuery($wordle);
 		$sql .= ' ORDER BY f.frequency LIMIT 1';
 		var_dump($sql);
+
+		return $sql;
+	}
+}
+
+class LetterReductionStrategy extends DatabaseStrategy
+{
+	// The goal of this strategy is to eliminate letters
+	protected function getQuery(Wordle $wordle) : string
+	{
+		$stats = $wordle->getStats();
+
+		// Get the positions that are NOT known and the letters that are NOT known
+		$sql = 'SELECT w.word FROM words w WHERE 1 == 1 ';
+		$sql .= QueryBuilder::getStandardQuery($wordle);
+		var_dump($sql);
+
+		return $sql;
+	}
+
+	protected function getLetterDistribution(int $column, array $known)
+	{
+		$sql = sprintf("SELECT c%d, COUNT(*) AS num_words FROM words %s");
+		$sql .= sprintf(" GROUP BY c%d ORDER BY num_words DESC", $column);
 
 		return $sql;
 	}
@@ -173,10 +244,18 @@ class StrategyDecider
 {
 	public static function getPrimaryStrategy(Wordle $wordle, Database $database) : Strategy
 	{
+		$numGuesses = count($wordle->getGuesses());
+
 		// Basic logic for determining which strategy to use.
-		if (count($wordle->getGuesses()) == 0)  {
+		if ($numGuesses === 0)  {
 			return new StartingStrategy;
 		}
+
+		$stats = $wordle->getStats();
+
+		/*if ($numGuesses < 3 && $stats->getUnknownLetters() > 10) {
+			return new LetterReductionStrategy($database);
+		}*/
 
 		return new FrequencyStrategy($database);
 	}
@@ -189,7 +268,7 @@ class StrategyDecider
 
 class QueryBuilder
 {
-	public function getStandardQuery(Wordle $wordle) : string
+	public static function getStandardQuery(Wordle $wordle) : string
 	{
 		$stats = $wordle->getStats();
 		//var_dump($stats);
@@ -198,14 +277,16 @@ class QueryBuilder
 		// Build out the inclusion and exclusions based on the results we have made so far
 		foreach (Wordle::$indexes as $idx) {
 			// If the letter is correct, use it
-			if (isset($stats['CORRECT_LETTERS'][$idx])) {
-				$sql .= sprintf(" AND c%d = '%s'", $idx, $stats['CORRECT_LETTERS'][$idx]);
+			if ($correctLetter = $stats->getCorrectLetterForIndex($idx)) {
+				$sql .= sprintf(" AND c%d = '%s'", $idx, $correctLetter);
 			} else {
 				// Always exclude the letters that aren't in the word all together
-				$excludedLetters = array_keys($stats['NOT_FOUND_LETTERS']['LETTERS']);
+				$excludedLetters = $stats->getExcludedLetters();
+
 				// Contionally exclude the words with letters that aren't in the right place
-				if (isset($stats['WRONG_LOCATION']['INDEX'][$idx])) {
-					$excludedLetters = array_merge($excludedLetters, $stats['WRONG_LOCATION']['INDEX'][$idx]);
+				$wrongLettersForIndex = $stats->getWrongLocationLettersForIndex($idx);
+				if (count($wrongLettersForIndex)) {
+					$excludedLetters = array_merge($excludedLetters, $wrongLettersForIndex);
 				}
 
 				$wrongLetterList = self::letterList($excludedLetters);
@@ -214,8 +295,8 @@ class QueryBuilder
 		}
 
 		// Make sure that the word uses letters that are in the wrong place
-		foreach ($stats['WRONG_LOCATION']['INDEX'] ?? [] as $index => $letters) {
-			$potentialLocations = array_diff(Wordle::$indexes, [$index], array_keys($stats['CORRECT_LETTERS']['INDEXES'] ?? []));
+		foreach ($stats->getWrongLocationLetters() as $index => $letters) {
+			$potentialLocations = array_diff(Wordle::$indexes, [$index], array_keys($stats->getCorrectLetters()));
 			foreach ($letters as $letter) {
 				$alternateindexeSql = implode(' OR ', array_map(function($index) use ($letter) {
 					return sprintf("c%d = '%s'", $index, $letter);
