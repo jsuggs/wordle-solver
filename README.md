@@ -29,3 +29,10 @@ I've got all 5 letter words in the database, so check.  I'm taking some shortcut
 
 ## Setup
 Not at a place to really share this at the moment.  But what I've got now relies on PHP7 with SQLITE3 extensions being installed.  Goal is to streamline this a bit more, potentially utilize some more collaborative choices.
+
+## Random Thoughts
+Wordle can seem hard, but kinda like Deep Blue (note, I am *NOT* trying to say solving wordle is even remotely as compplicated as chess), once you get a grasp of the domain, it's not that bad, its just starting to put together ideas and have a means of testing them.
+
+I'm pretty certain I can take this further, and I may.  Given the fact that the state space is small enough and static, the "solution" can become objective.  I can see this going in the way optimization, both in the efficiency of algorithm, but also in code.  My first passes are just a progression of getting something working, mixed in with some "ideas" but then caught up with "lets just get something working".
+
+Finally, I hope that this helps to document a bit about how I go about problem solving.  I may not be the smatest, or have the most efficient algorithms.  However, I like to attack a problem, even if its weird or wrong or imprecise.  Then I refine it.
