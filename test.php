@@ -46,7 +46,7 @@ class Tester
 		while ($guessNumber <= self::MAX_GUESSES) {
 			// Setup the wordle
 			$wordle = new Wordle();
-			$wordle->results = $results;
+			$wordle->setResults($results);
 
 			$guess = $this->solver->solve($wordle);
 			$result = ResultTester::getGuessResult($word, $guess->word);

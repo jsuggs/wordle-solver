@@ -2,10 +2,20 @@
 
 class Wordle
 {
-	public array $results = [];
 	public static $indexes = [1,2,3,4,5];
 	public static $letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
 	private string $cacheKey;
+	private array $results = [];
+
+	public function addResult(Result $result)
+	{
+		$this->results[] = $result;
+	}
+
+	public function setResults(array $results)
+	{
+		$this->results = $results;
+	}
 
 	public function getStats() : Stats
 	{
