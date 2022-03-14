@@ -7,7 +7,7 @@ $allWords = [
 
 
 $wordsToTest = [
-	"MIDGE"
+	"NAVAL"
 ];
 $wordsToTest = $allWords;
 
@@ -75,18 +75,18 @@ $solver = new Solver($db);
 $tester = new Tester($solver);
 
 echo "Starting Tests\n";
-$testResults = [];
+$results = [];
 foreach ($wordsToTest as $idx => $word) {
 	echo "Word: $word\n";
 	try {
 		$result = $tester->runTest($word);
 		echo sprintf("\tn: %d\n", $result->numGuesses);
+		$results['SUCCESS'][] = $result;
 		//var_dump($result);
 	} catch (Exception $e) {
+		$results['FAIL'][] = $word;
 		echo sprintf("%s\n", 'N');
 	}
-	//echo sprintf("%s\n", 'Y');
-	//$testResults[] =  $result;
 }
 
-//var_dump($testResults);
+var_dump($results);

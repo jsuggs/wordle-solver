@@ -4,6 +4,7 @@ class Wordle
 {
 	public array $results = [];
 	public static $indexes = [1,2,3,4,5];
+	public static $letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
 	private string $cacheKey;
 
 	public function getStats() : Stats
@@ -87,7 +88,11 @@ class Stats
 
 	public function getUnknownLetters() : array
 	{
-		//
+		return array_diff(
+			Wordle::$letters,
+			array_keys($this->data['NOT_FOUND_LETTERS']['LETTERS'] ?? []),
+			array_keys($this->data['CORRECT_LETTERS']['LETTERS'] ?? [])
+		);
 	}
 
 	public function getUnknownPositions()
@@ -232,7 +237,7 @@ abstract class DatabaseStrategy extends Strategy
 		return $this->database->executeWordQuery($sql);
 	}
 
-	abstract protected function getQuery(Stats $stats) : string;
+	//abstract protected function getQuery(Stats $stats) : string;
 }
 
 class FrequencyStrategy extends DatabaseStrategy
@@ -261,35 +266,89 @@ class LetterReductionStrategy extends DatabaseStrategy
 		$stats = $wordle->getStats();
 		$knownLetters = $stats->getCorrectLetters();
 		$exclusionQuery = QueryBuilder::getExclusionQuery($stats);
-		//var_dump($knownLetters);
+
+		$sql = 'SELECT w.word FROM words w WHERE 1 == 1 ';
+		$sql .= QueryBuilder::getExclusionQuery($stats);
+		$numLettersToTry = 5 - count($knownLetters['INDEXES'] ?? []);
+		$unknownIndexes = array_diff(Wordle::$indexes, array_keys($knownLetters));
+		//var_dump('xxx', $knownLetters, $unknownIndexes, $numLettersToTry);
+		while ($numLettersToTry > 1) {
+			// TODO - Build this function to get the unique set of columns to exclude
+			$indexCombos = [
+				['left' => 1, 'right' => 2],
+				['left' => 1, 'right' => 3],
+				['left' => 1, 'right' => 4],
+			];
+
+			$notMatchingEachOther = ' AND ' . implode(' AND ', array_map(function($combo) {
+				return sprintf(" c%d != c%d ", $combo['left'], $combo['right']);
+			}, $indexCombos));
+
+			// If there are known letters, don't use those
+			$notMatchingKnown = '';
+			if (count($knownLetters)) {
+				$notMatchingKnown = ' AND ' . implode(' AND ', array_map(function($idx) use ($knownLetters) {
+					return sprintf(" c%d NOT IN (%s) ", $idx, QueryBuilder::letterList(array_keys($knownLetters['LETTERS'])));
+				}, $unknownIndexes));
+			}
+
+			$loopSql = $sql .= $notMatchingEachOther . $notMatchingKnown;
+			//var_dump($loopSql);
+
+			$word = $this->database->executeWordQuery($loopSql);
+
+			if ($word) {
+				return new Guess($this, $word);
+			}
+			//var_dump($word);
+			//die();
+
+			// This is the start of the hack of the stats.
+			// Put in some new data, see what comes back.
+			$numLettersToTry--;
+		}
+		//die('xxx');
+
+		$word = $this->database->executeWordQuery($sql);
+
+		if (!$word) {
+			throw new Exception('No Guess');
+		}
+
+		$guess = new Guess($this, $word);
+
+		return $guess;
+	}
+
+	public function getName() : string
+	{
+		return 'Letter Reduction';
+	}
+}
+
+class IndexUsageStrategy extends DatabaseStrategy
+{
+	// The goal of this strategy is to eliminate letters
+	public function guess(Wordle $wordle) : Guess
+	{
+		$stats = $wordle->getStats();
+		$knownLetters = $stats->getCorrectLetters();
+		$exclusionQuery = QueryBuilder::getExclusionQuery($stats);
 
 		$distributions = [];
 		foreach (Wordle::$indexes as $idx) {
-			$distributions[$idx] = $this->getLetterDistribution($idx, [], $exclusionQuery);
+			if (!array_key_exists($idx, $knownLetters)) {
+				$distributions[$idx] = $this->getLetterDistribution($idx, [], $exclusionQuery);
+			}
 		}
 		$countByIndex = $this->getCountByIndex($distributions);
 
 		// Start off with a more simple algorithm.  Just pick the single letter with highest number of words.
 		// Can expand this logic later.  A hack for now.
-		//var_dump($countByIndex);die();
 		$mostPoularIndex = $this->getMostPopularIndex($countByIndex);
 
 		$newStats = clone $stats;
 		$newStats->addCorrectLetter($mostPoularIndex['idx'], $mostPoularIndex['letter']);
-
-		/*
-
-		// Try to find a word that has the most letters, keep reducing
-		$numLettersToTry = count($countByIndex);
-		while ($numLettersToTry > 1) {
-			// Try to find a word that has the most of the letters
-			$depth = 3;
-			$this->trytoFindWord();
-			// This is the start of the hack of the stats.
-			// Put in some new data, see what comes back.
-			$numLettersToTry--;
-		} 
-		*/
 
 		// Get the positions that are NOT known and the letters that are NOT known
 		$sql = 'SELECT w.word FROM words w WHERE 1 == 1 ';
@@ -305,6 +364,7 @@ class LetterReductionStrategy extends DatabaseStrategy
 
 		return $guess;
 	}
+
 	protected function getQuery(Stats $stats) : string
 	{
 		return 'TODO: think about class structure';
@@ -398,22 +458,17 @@ class StrategyDecider
 		$stats = $wordle->getStats();
 		$numGuesses = $stats->getResultCount();
 
-		// Basic logic for determining which strategy to use.
 		if ($numGuesses < 2)  {
 			return new StartingStrategy($numGuesses);
 		}
-		return new LetterReductionStrategy($database);
 
-		if ($numGuesses < 4 && $stats->getUnknownPositions() > 3) {
+		$numUnknownLetters = count($stats->getUnknownLetters());
+
+		if ($numGuesses < 4 && $numUnknownLetters > 17) {
 			return new LetterReductionStrategy($database);
 		}
 
-		return new FrequencyStrategy($database);
-	}
-
-	public static function getFallbackStrategy(Wordle $wordle) : Strategy
-	{
-		return new FallBackStrategy($wordle);
+		return new IndexUsageStrategy($database);
 	}
 }
 
@@ -459,7 +514,7 @@ class QueryBuilder
 		return $sql;
 	}
 
-	private static function letterList(array $letters)
+	public static function letterList(array $letters)
 	{
 		return implode(',', array_map(function($letter) {
 			return sprintf("'%s'", $letter);

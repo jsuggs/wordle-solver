@@ -17,8 +17,7 @@ Here's the word list as the wordle archive says
 https://github.com/DevangThakkar/wordle_archive/blob/master/src/data/words.js
 
 ## Algorithm notes
-Ok, basic handling of correct and not found letters.  Now its time to put in the wrong location logic.
-Now, need to make sure that if letters are in the wrong place, that we limit to words that have those letters.
+Starting to do some unscientific testing with how I pick my algorithm (hopefully more to come on that soon).  I'm now at a point where I have some different strategies that I can use, so deciding when to use them is kinda fun.
 
 
 ## Day Two
@@ -38,3 +37,5 @@ I'm pretty certain I can take this further, and I may.  Given the fact that the 
 Finally, I hope that this helps to document a bit about how I go about problem solving.  I may not be the smatest, or have the most efficient algorithms.  However, I like to attack a problem, even if its weird or wrong or imprecise.  Then I refine it.
 
 Looks like I've got a good foundation.  Most are found under 6, but a few take 7.  Going to start looking into the data a bit more.
+
+Frequency of a word is useful in the context of how we utilize words.  However, in the context of "solving" wordle it has no merit.  The algorithm(s) should not take into account usage (or in a weird way, emotion), but rather just facts.
