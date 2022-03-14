@@ -122,15 +122,21 @@ class Result
 	public $c1, $c2, $c3, $c4, $c5;
 	public $word;
 
-	public static function fromMask(string $mask) : Result
+	public static function fromMask(string $word, string $mask) : Result
 	{
 		$instance = new self();
+		$instance->setWord($word);
 
 		foreach (Wordle::$indexes as $idx) {
 			$instance->{sprintf('c%d', $idx)} = $mask{$idx - 1};
 		}
 
 		return $instance;
+	}
+
+	public function setWord(string $word)
+	{
+		$this->word = $word;
 	}
 
 	public function __toString()
@@ -524,27 +530,13 @@ class QueryBuilder
 
 class InputMapper
 {
-	public function mapFile(string $filename) : Wordle
-	{
-		if (!file_exists($filename)) {
-			throw new Exception(sprintf('File %s does not exist', $filename));
-		}
-
-		$data = file_get_contents($filename);
-
-		return $this->mapJson($data);
-		
-	}
-
 	public function mapJson(string $data) : Wordle
 	{
 		$json = json_decode($data, true);
 
 		$wordle = new Wordle();
 		foreach ($json['results'] as $data) {
-			$result = Result::fromMask($data['result']);
-			$result->word = $data['word'];
-			$wordle->results[] = $result;
+			$wordle->results[] = Result::fromMask($data['word'], $data['result']);
 		}
 
 		return $wordle;

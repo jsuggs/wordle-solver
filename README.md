@@ -2,6 +2,11 @@
 
 First, why am I buidling a wordle solver?  Mainly to see if I can.  Also, my family is going to be in Texas for a week, so I've got some extra time on my hands.
 
+## Goals
+- Be able to solve all words
+- Use the simplest algorithms possible
+- Learn something new and have fun doing it
+
 ## Assumptions / Methodology
 I'm going to use some basic php (its what I know best) and I think at least to start, I'm going to focus on getting something working in more or a brute force type of situation.  Then I'll layer in more advanved techniques as it progresses.
 

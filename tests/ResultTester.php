@@ -12,8 +12,7 @@ class TestCase
 	{
 		$this->word = $word;
 		$this->guess = $guess;
-		$this->expectation = Result::fromMask($expectation);
-		$this->expectation->word = $guess;
+		$this->expectation = Result::fromMask($guess, $expectation);
 	}
 }
 
