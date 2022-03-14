@@ -7,9 +7,9 @@ $allWords = [
 
 
 $wordsToTest = [
-	"NAVAL"
+	"GORGE",
 ];
-$wordsToTest = $allWords;
+//$wordsToTest = $allWords;
 
 class TestResult
 {
@@ -74,19 +74,23 @@ $db = new Database();
 $solver = new Solver($db);
 $tester = new Tester($solver);
 
-echo "Starting Tests\n";
 $results = [];
-foreach ($wordsToTest as $idx => $word) {
+echo "Starting Tests\n";
+foreach ($wordsToTest as $word) {
 	echo "Word: $word\n";
-	try {
-		$result = $tester->runTest($word);
-		echo sprintf("\tn: %d\n", $result->numGuesses);
-		$results['SUCCESS'][] = $result;
-		//var_dump($result);
-	} catch (Exception $e) {
-		$results['FAIL'][] = $word;
-		echo sprintf("%s\n", 'N');
-	}
+	$results[] = $tester->runTest($word);
 }
 
-var_dump($results);
+// Do some processign on the results
+$stats = [];
+
+foreach ($results as $result) {
+	$stats['GUESSES'][$result->numGuesses] = ($stats['GUESSES'][$result->numGuesses] ?? 0) + 1;
+}
+
+echo "Test Results\n";
+echo sprintf("Words Tested: %d\n", count($results));
+echo "Guess Breakdown\n";
+foreach ($stats['GUESSES'] as $guess => $numGuesses) {
+	echo sprintf("%d: %d\n", $guess, $numGuesses);
+}
