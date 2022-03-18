@@ -1,0 +1,115 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Wordle Solver{% endblock %}
+
+{% block body %}
+
+<style>
+    .letter { width: 25px; height: 25px; text-align: center; }
+    .letter.correct { background-color: green; }
+    .letter.not-found { background-color: red; }
+    .letter.wrong-location { background-color: yellow; }
+
+    .frequent-words-wrapper { max-height: 200px; overflow: auto; display: inline-block; }
+</style>
+
+<div class="row">
+    <div class="wordle-wrapper col-md-4">
+        <h2>Wordle Input</h2>
+
+        <h3>Solve a Wordle?</h3>
+        <p>This will show a path to a solution of the wordle.</p>
+        <form action="/solve">
+            <input type="text" name="word">
+            <button type="submit" class="btn btn-primary">Show solution</button>
+        </form>
+
+        <hr>
+
+        <h3>Wordle Help</h3>
+        <p>Stuck and need some guidance?  This can walk you through any stage of a wordle, give suggestions for your next guess or just want to see some stats.</p>
+        <table class="wordle">
+            {% for result in wordle.results %}
+                <tr>
+                    {% for idx in 1..5 %}
+                        <td class="letter {{ result.getStatusName(idx) }}">
+                            {{ result.getLetter(idx) }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+        <form>
+            <div class="mb-3">
+                <label for="word" class="form-label">Guess</label>
+                <input type="text" class="form-control" id="word" name="word" aria-describedby="wordHelp">
+                <div id="wordHelp" class="form-text">Enter in the word you guess.</div>
+            </div>
+            <div class="mb-3">
+                <label for="mask" class="form-label">Result</label>
+                <input type="text" class="form-control" id="mask" name="mask">
+                <div id="maskHelp" class="form-text">This is the 5 character string that corresponds to your answers.  C = Correct, N = Not Found, W = Wrong Place</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+
+            <hr>
+
+            <input type="textarea" name="results" value="{{ wordle.resultsData|json_encode() }}">
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <h2>Guesses</h2>
+
+        <h2>Strategies</h2>
+        {% for result in strategyResults %}
+            <div class="strategy">
+                <h3>{{ result.guess.word }}</h3>
+
+                <p>Other Results</p>
+                <ol>
+                    {% for result in result.results %}
+                        <li>{{ result.word }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="letter-distribution col-md-4">
+        <h2>Stats</h2>
+
+        <h3>Most Frequntly occurring words</h3>
+        <div class="frequent-words-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Rank</th>
+                        <th scope="col">Word</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in frequentWords %}
+                        <tr>
+                            <td scope="row">{{ row['frequency'] }}</th>
+                            <td>{{ row['word'] }}</th>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Letter Distributions</h3>
+
+        <h3>By Index</h3>
+        {% for idx, distribution in letterDistribution['indexes'] %}
+            <div class="distribution">
+                <h4>Index {{ idx}}</h4> 
+                {% for letter, count in distribution %}
+                    <p>{{ letter }} : {{ count}}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
