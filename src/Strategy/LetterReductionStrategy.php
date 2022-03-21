@@ -18,7 +18,7 @@ class LetterReductionStrategy extends DatabaseStrategy
         $sql = 'SELECT w.word, IFNULL(f.frequency, 10000) AS frequency FROM words w LEFT OUTER JOIN frequency f ON w.word = f.word WHERE 1 == 1 ';
         $sql .= $exclusionQuery;
 
-        $numLettersToTry = 5 - count($knownLetters['INDEXES'] ?? []);
+        $numLettersToTry = 5 - count($knownLetters);
         $unknownIndexes = array_diff(Wordle::$indexes, array_keys($knownLetters));
 
         while ($numLettersToTry > 1) {
@@ -41,7 +41,7 @@ class LetterReductionStrategy extends DatabaseStrategy
             $notMatchingKnown = '';
             if (count($knownLetters)) {
                 $notMatchingKnown = ' AND '.implode(' AND ', array_map(function ($idx) use ($knownLetters) {
-                    return sprintf(' c%d NOT IN (%s) ', $idx, QueryHelper::letterList(array_keys($knownLetters['LETTERS'])));
+                    return sprintf(' c%d NOT IN (%s) ', $idx, QueryHelper::letterList(array_keys($knownLetters)));
                 }, $unknownIndexes));
             }
 

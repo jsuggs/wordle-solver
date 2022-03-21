@@ -3,6 +3,7 @@
 namespace App\Tests\Util;
 
 use App\Util\Stats;
+use App\Util\Wordle;
 use PHPUnit\Framework\TestCase;
 
 class StatsTest extends TestCase
@@ -11,6 +12,10 @@ class StatsTest extends TestCase
     {
         $stats = new Stats();
         $this->assertEquals([], $stats->getData());
+        $this->assertEquals([], $stats->getCorrectLetters());
+        $this->assertEquals([], $stats->getWrongLocationLetters());
+        $this->assertEquals([], $stats->getExcludedLetters());
+        $this->assertEquals(Wordle::$letters, $stats->getUnknownLetters());
     }
 
     public function testAddNotFoundLetter(): void
@@ -25,29 +30,37 @@ class StatsTest extends TestCase
             ],
         ];
 
-
         $this->assertEquals($data, $stats->getData());
     }
 
-    public function testCorrectLetter(): void
+    public function testCorrectLetterLogic(): void
     {
         $stats = new Stats();
         $stats->addCorrectLetter(1, 'A');
+
+        $data = $stats->getData();
+        $this->assertEquals('A', $stats->getCorrectLetterForIndex(1));
+        $this->assertNull($stats->getCorrectLetterForIndex(2));
+
+        $unknownLetters = Wordle::$letters;
+        unset($unknownLetters[0]); // Remove 'A'
+
+        $this->assertEquals($unknownLetters, $stats->getUnknownLetters());
+
         $stats->addCorrectLetter(3, 'B');
         $stats->addCorrectLetter(5, 'C');
 
         $data = [
             'CORRECT_LETTERS' => [
-                'LETTERS' => ['A' => 1, 'B' => 1, 'C' => 1],
-                'INDEXES' => [1 => 1, 3 => 1, 5 => 1],
-                '1' => 'A',
-                '3' => 'B',
-                '5' => 'C',
+                'A' => 1,
+                'B' => 3,
+                'C' => 5,
             ],
         ];
 
-
         $this->assertEquals($data, $stats->getData());
         $this->assertEquals('A', $stats->getCorrectLetterForIndex(1));
+        $this->assertEquals('B', $stats->getCorrectLetterForIndex(3));
+        $this->assertEquals('C', $stats->getCorrectLetterForIndex(5));
     }
 }

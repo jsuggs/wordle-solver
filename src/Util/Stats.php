@@ -25,9 +25,7 @@ class Stats
 
     public function addCorrectLetter(int $idx, string $letter)
     {
-        $this->data['CORRECT_LETTERS'][$idx] = $letter;
-        $this->data['CORRECT_LETTERS']['LETTERS'][$letter] = 1;
-        $this->data['CORRECT_LETTERS']['INDEXES'][$idx] = 1;
+        $this->data['CORRECT_LETTERS'][$letter] = $idx;
     }
 
     public function getCorrectLetters(): array
@@ -37,7 +35,9 @@ class Stats
 
     public function getCorrectLetterForIndex(int $idx): ?string
     {
-        return $this->data['CORRECT_LETTERS'][$idx] ?? null;
+        return false === array_search($idx, $this->data['CORRECT_LETTERS'] ?? [])
+            ? null
+            : array_search($idx, $this->data['CORRECT_LETTERS']);
     }
 
     public function addWrongLocationLetter(int $idx, string $letter)
@@ -61,7 +61,7 @@ class Stats
         return array_diff(
             Wordle::$letters,
             array_keys($this->data['NOT_FOUND_LETTERS']['LETTERS'] ?? []),
-            array_keys($this->data['CORRECT_LETTERS']['LETTERS'] ?? [])
+            array_keys($this->data['CORRECT_LETTERS'] ?? [])
         );
     }
 
