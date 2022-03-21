@@ -8,7 +8,7 @@ use App\Util\Wordle;
 
 class StatsService
 {
-	public static function getStats(Wordle $wordle) : Stats
+    public static function getStats(Wordle $wordle): Stats
     {
         $stats = new Stats();
         $resultCount = 0;
@@ -28,7 +28,7 @@ class StatsService
             $resultCount++;
         }
         $stats->setResultCount($resultCount);
-        
+
         return $stats;
     }
 }

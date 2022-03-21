@@ -7,5 +7,5 @@ use App\Util\Wordle;
 
 abstract class Strategy
 {
-	abstract public function getResults(Wordle $wordle) : StrategyResults;
+    abstract public function getResults(Wordle $wordle): StrategyResults;
 }

@@ -18,17 +18,17 @@ class Wordle
         $this->results = $results;
     }
 
-    public function getResults() : array
+    public function getResults(): array
     {
         return $this->results;
     }
 
-    public function getResult(int $idx) :? Result
+    public function getResult(int $idx): ?Result
     {
         return $this->result[$idx];
     }
 
-    public function getResultsData() : array
+    public function getResultsData(): array
     {
         $data = [];
         foreach ($this->results as $result) {

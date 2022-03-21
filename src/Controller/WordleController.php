@@ -50,7 +50,7 @@ class WordleController extends AbstractController
         die();
     }
 
-    private function getWordle(Request $request) : Wordle
+    private function getWordle(Request $request): Wordle
     {
         $wordle = new Wordle();
 
