@@ -9,8 +9,8 @@ use App\Strategy\StrategyDecider;
 use App\Util\Result;
 use App\Util\Wordle;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class WordleController extends AbstractController
@@ -47,7 +47,7 @@ class WordleController extends AbstractController
             'results' => $wordle->getResultsData(),
         ]);
         dump($wordle);
-        die();
+        exit();
     }
 
     private function getWordle(Request $request): Wordle

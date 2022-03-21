@@ -11,7 +11,7 @@ class ResultTester
         foreach (Wordle::$indexes as $idx) {
             $value = Result::NOT_FOUND;
 
-            if ($word{$idx - 1} === $guess[$idx - 1]) {
+            if ($word[$idx - 1] === $guess[$idx - 1]) {
                 // In the correct spot
                 $value = Result::CORRECT;
             } else {
@@ -23,7 +23,7 @@ class ResultTester
                 if ($numLettersInWord > 0) {
                     $value = Result::WRONG_LOCATION;
                 }
-                //var_dump($word, $guess, $idx, $guess[$idx - 1], $numLettersInWord, $numLetterInGuess);
+                // var_dump($word, $guess, $idx, $guess[$idx - 1], $numLettersInWord, $numLetterInGuess);
             }
 
             $result->setStatus($idx, $value);

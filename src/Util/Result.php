@@ -85,7 +85,7 @@ class Result
 
     public function __toString()
     {
-        return $this->c1 . $this->c2 . $this->c3 . $this->c4 . $this->c5;
+        return $this->c1.$this->c2.$this->c3.$this->c4.$this->c5;
     }
 
     public function isCorrect(): bool

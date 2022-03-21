@@ -4,8 +4,8 @@ namespace App\Util;
 
 class Wordle
 {
-    public static $indexes = [1,2,3,4,5];
-    public static $letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+    public static $indexes = [1, 2, 3, 4, 5];
+    public static $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
     private array $results = [];
 
     public function addResult(Result $result)

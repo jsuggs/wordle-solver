@@ -3,7 +3,6 @@
 namespace App\Strategy;
 
 use App\Util\Guess;
-use App\Util\QueryHelper;
 use App\Util\Wordle;
 use Doctrine\DBAL\Connection;
 
@@ -33,12 +32,11 @@ abstract class DatabaseStrategy extends Strategy
 
     protected function checkIfWordExist(Stats $stats): string
     {
-        //
         $sql = 'SELECT w.word FROM words w WHERE 1 == 1 ';
         $sql .= QueryBuilder::getExclusionQuery($stats);
 
         return $this->database->executeWordQuery($sql);
     }
 
-    //abstract protected function getQuery(Stats $stats) : string;
+    // abstract protected function getQuery(Stats $stats) : string;
 }

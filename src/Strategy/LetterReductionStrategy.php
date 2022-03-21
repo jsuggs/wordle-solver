@@ -33,19 +33,19 @@ class LetterReductionStrategy extends DatabaseStrategy
                 }
             }
 
-            $notMatchingEachOther = ' AND ' . implode(' AND ', array_map(function ($combo) {
-                return sprintf(" c%d != c%d ", $combo['left'], $combo['right']);
+            $notMatchingEachOther = ' AND '.implode(' AND ', array_map(function ($combo) {
+                return sprintf(' c%d != c%d ', $combo['left'], $combo['right']);
             }, $indexCombos));
 
             // If there are known letters, don't use those
             $notMatchingKnown = '';
             if (count($knownLetters)) {
-                $notMatchingKnown = ' AND ' . implode(' AND ', array_map(function ($idx) use ($knownLetters) {
-                    return sprintf(" c%d NOT IN (%s) ", $idx, QueryHelper::letterList(array_keys($knownLetters['LETTERS'])));
+                $notMatchingKnown = ' AND '.implode(' AND ', array_map(function ($idx) use ($knownLetters) {
+                    return sprintf(' c%d NOT IN (%s) ', $idx, QueryHelper::letterList(array_keys($knownLetters['LETTERS'])));
                 }, $unknownIndexes));
             }
 
-            $loopSql = $sql . $notMatchingEachOther . $notMatchingKnown . ' ORDER BY frequency ASC';
+            $loopSql = $sql.$notMatchingEachOther.$notMatchingKnown.' ORDER BY frequency ASC';
             dump($sql, $knownLetters, $loopSql);
 
             $results = $this->conn->fetchAllAssociative($loopSql);
@@ -54,7 +54,7 @@ class LetterReductionStrategy extends DatabaseStrategy
 
             return new StrategyResults($guess, $results);
 
-            $numLettersToTry--;
+            --$numLettersToTry;
         }
 
         throw new \Exception('No Guess');

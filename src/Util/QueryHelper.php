@@ -39,7 +39,7 @@ class QueryHelper
                 $sql .= sprintf(' AND (%s)', $alternateindexeSql);
             }
         }
-        //var_dump($sql)
+        // var_dump($sql)
 
         return $sql;
     }

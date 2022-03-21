@@ -2,11 +2,10 @@
 
 namespace App\Service;
 
+use App\Strategy\StrategyDecider;
 use App\Util\Result;
 use App\Util\ResultTester;
-use App\Util\Stats;
 use App\Util\Wordle;
-use App\Strategy\StrategyDecider;
 
 class Solver
 {
@@ -31,13 +30,13 @@ class Solver
             $guess = $this->strategyDecider->getBestGuess($wordle);
             $result = ResultTester::getGuessResult($word, $guess->word);
             $results[] = $result;
-            //echo sprintf("Guess %d: %s Result: %s Algo: %s\n", $guessNumber, $guess->word, $result, $guess->getAlgorithm());
+            // echo sprintf("Guess %d: %s Result: %s Algo: %s\n", $guessNumber, $guess->word, $result, $guess->getAlgorithm());
 
             if ($result->isCorrect()) {
                 break;
             }
 
-            $guessNumber++;
+            ++$guessNumber;
         }
 
         return $wordle;

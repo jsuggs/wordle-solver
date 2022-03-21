@@ -17,15 +17,15 @@ class StatsService
             foreach (Wordle::$indexes as $idx) {
                 $resultValue = $result->getStatus($idx);
                 $letter = $result->getLetter($idx);
-                if ($resultValue == Result::NOT_FOUND) {
+                if (Result::NOT_FOUND == $resultValue) {
                     $stats->addNotFoundLetter($idx, $letter);
-                } elseif ($resultValue == Result::CORRECT) {
+                } elseif (Result::CORRECT == $resultValue) {
                     $stats->addCorrectLetter($idx, $letter);
-                } elseif ($resultValue == Result::WRONG_LOCATION) {
+                } elseif (Result::WRONG_LOCATION == $resultValue) {
                     $stats->addWrongLocationLetter($idx, $letter);
                 }
             }
-            $resultCount++;
+            ++$resultCount;
         }
         $stats->setResultCount($resultCount);
 

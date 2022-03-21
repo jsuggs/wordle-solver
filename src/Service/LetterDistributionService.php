@@ -41,8 +41,8 @@ class LetterDistributionService
 
     protected function getLetterDistributionForColumn(int $column, string $exclusionQuery): array
     {
-        $sql = sprintf("SELECT c%d AS letter, COUNT(*) AS num_words FROM words WHERE 1=1 %s", $column, $exclusionQuery);
-        $sql .= sprintf(" GROUP BY c%d ORDER BY num_words DESC", $column);
+        $sql = sprintf('SELECT c%d AS letter, COUNT(*) AS num_words FROM words WHERE 1=1 %s', $column, $exclusionQuery);
+        $sql .= sprintf(' GROUP BY c%d ORDER BY num_words DESC', $column);
 
         $data = [];
 
