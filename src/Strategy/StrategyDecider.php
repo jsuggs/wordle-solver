@@ -20,13 +20,14 @@ class StrategyDecider
     {
         $results = [];
 
-        $results[] = $this->letterReductionStrategy->getResults($wordle);
         try {
-        } catch (\Exception $e) {
+            $results[] = $this->letterReductionStrategy->getResults($wordle);
+        } catch (NoGuessException$e) {
         }
-        $results[] = $this->frequencyStrategy->getResults($wordle);
+
         try {
-        } catch (\Exception $e) {
+            $results[] = $this->frequencyStrategy->getResults($wordle);
+        } catch (NoGuessException $e) {
         }
 
         return $results;

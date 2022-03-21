@@ -23,8 +23,10 @@ class QueryHelper
                     $excludedLetters = array_merge($excludedLetters, $wrongLettersForIndex);
                 }
 
-                $wrongLetterList = self::letterList($excludedLetters);
-                $sql .= sprintf(' AND c%d NOT IN (%s)', $idx, $wrongLetterList);
+                if (count($excludedLetters)) {
+                    $wrongLetterList = self::letterList($excludedLetters);
+                    $sql .= sprintf(' AND c%d NOT IN (%s)', $idx, $wrongLetterList);
+                }
             }
         }
 
@@ -39,7 +41,6 @@ class QueryHelper
                 $sql .= sprintf(' AND (%s)', $alternateindexeSql);
             }
         }
-        // var_dump($sql)
 
         return $sql;
     }

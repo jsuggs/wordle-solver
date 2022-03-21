@@ -79,7 +79,8 @@
     <div class="letter-distribution col-md-4">
         <h2>Stats</h2>
 
-        <h3>Most Frequntly occurring words</h3>
+        <h3>Most Common Words</h3>
+        <p><small>Source: https://www-cs-faculty.stanford.edu/~knuth/sgb-words.txt</small></p>
         <div class="frequent-words-wrapper">
             <table class="table">
                 <thead>
@@ -101,10 +102,16 @@
 
         <h3>Letter Distributions</h3>
 
-        <h3>By Index</h3>
+        <div class="distribution">
+            <h4>Global</h4>
+            {% for letter, count in letterDistribution['total'] %}
+                <p>{{ letter }} : {{ count}}</p>
+            {% endfor %}
+        </div>
+        <h4>By Index</h4>
         {% for idx, distribution in letterDistribution['indexes'] %}
             <div class="distribution">
-                <h4>Index {{ idx}}</h4> 
+                <h5>Index {{ idx}}</h5>
                 {% for letter, count in distribution %}
                     <p>{{ letter }} : {{ count}}</p>
                 {% endfor %}

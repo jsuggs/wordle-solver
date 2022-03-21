@@ -25,11 +25,11 @@ class Solver
         $found = false;
 
         while ($guessNumber <= self::MAX_GUESSES) {
-            $wordle->setResults($results);
-
             $guess = $this->strategyDecider->getBestGuess($wordle);
             $result = ResultTester::getGuessResult($word, $guess->word);
             $results[] = $result;
+            $wordle->setResults($results);
+
             // echo sprintf("Guess %d: %s Result: %s Algo: %s\n", $guessNumber, $guess->word, $result, $guess->getAlgorithm());
 
             if ($result->isCorrect()) {
@@ -40,18 +40,5 @@ class Solver
         }
 
         return $wordle;
-
-        return new TestResult($guessNumber, $word, $found, $totalTime);
-
-        $primaryStrategy = StrategyDecider::getPrimaryStrategy($wordle, $this->database);
-
-        $guess = $primaryStrategy->guess($wordle);
-
-        if (!$guess) {
-            // Fallback Strategy?
-            throw new Exception('No Guess');
-        }
-
-        return $guess;
     }
 }

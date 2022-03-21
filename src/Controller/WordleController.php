@@ -44,10 +44,8 @@ class WordleController extends AbstractController
         $wordle = $solver->solve($word, $wordle);
 
         return $this->redirectToRoute('wordle', [
-            'results' => $wordle->getResultsData(),
+            'results' => json_encode($wordle->getResultsData()),
         ]);
-        dump($wordle);
-        exit();
     }
 
     private function getWordle(Request $request): Wordle

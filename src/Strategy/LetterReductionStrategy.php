@@ -46,7 +46,7 @@ class LetterReductionStrategy extends DatabaseStrategy
             }
 
             $loopSql = $sql.$notMatchingEachOther.$notMatchingKnown.' ORDER BY frequency ASC';
-            dump($sql, $knownLetters, $loopSql);
+            // dump($sql, $knownLetters, $loopSql);
 
             $results = $this->conn->fetchAllAssociative($loopSql);
 
@@ -57,7 +57,7 @@ class LetterReductionStrategy extends DatabaseStrategy
             --$numLettersToTry;
         }
 
-        throw new \Exception('No Guess');
+        throw new NoGuessException('No Guess');
     }
 
     public function getName(): string

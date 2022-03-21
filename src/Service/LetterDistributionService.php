@@ -25,18 +25,21 @@ class LetterDistributionService
         $distributions = [];
         foreach (Wordle::$indexes as $idx) {
             if (!array_key_exists($idx, $knownLetters)) {
-                $distributions['indexes'][$idx] = $this->getLetterDistributionForColumn($idx, $exclusionQuery);
+                $distributions[$idx] = $this->getLetterDistributionForColumn($idx, $exclusionQuery);
             }
         }
-        $totals = [];
-        foreach ($distributions['indexes'] as $distribution) {
+        $total = [];
+        foreach ($distributions as $distribution) {
             foreach ($distribution as $letter => $count) {
-                $totals[$letter] = $totals[$letter] ?? 0 + $count;
+                $total[$letter] = ($total[$letter] ?? 0) + $count;
             }
         }
-        $distributions['total'] = $totals;
+        arsort($total);
 
-        return $distributions;
+        return [
+            'indexes' => $distributions,
+            'total' => $total,
+        ];
     }
 
     protected function getLetterDistributionForColumn(int $column, string $exclusionQuery): array
