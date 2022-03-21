@@ -8,7 +8,7 @@ use App\Util\Wordle;
 class StrategyDecider
 {
     private LetterReductionStrategy $letterReductionStrategy;
-    private FrequencyStrategy  $frequencyStrategy;
+    private FrequencyStrategy   $frequencyStrategy;
 
     public function __construct(LetterReductionStrategy $letterReductionStrategy, FrequencyStrategy $frequencyStrategy)
     {
