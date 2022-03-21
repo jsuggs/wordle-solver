@@ -8,17 +8,24 @@ use App\Util\Wordle;
 class StrategyDecider
 {
     private LetterReductionStrategy $letterReductionStrategy;
-    private FrequencyStrategy   $frequencyStrategy;
+    private FrequencyStrategy $frequencyStrategy;
+    private OpeningStrategy $openingStrategy;
 
-    public function __construct(LetterReductionStrategy $letterReductionStrategy, FrequencyStrategy $frequencyStrategy)
+    public function __construct(LetterReductionStrategy $letterReductionStrategy, FrequencyStrategy $frequencyStrategy, OpeningStrategy $openingStrategy)
     {
         $this->letterReductionStrategy = $letterReductionStrategy;
         $this->frequencyStrategy = $frequencyStrategy;
+        $this->openingStrategy = $openingStrategy;
     }
 
     public function getStrategyResults(Wordle $wordle): array
     {
         $results = [];
+
+        try {
+            $results[] = $this->openingStrategy->getResults($wordle);
+        } catch (NoGuessException$e) {
+        }
 
         try {
             $results[] = $this->letterReductionStrategy->getResults($wordle);

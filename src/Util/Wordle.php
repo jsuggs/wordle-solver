@@ -40,4 +40,11 @@ class Wordle
 
         return $data;
     }
+
+    public function isSolved(): bool
+    {
+        $lastResult = end($this->results);
+
+        return $lastResult && $lastResult->isCorrect();
+    }
 }
