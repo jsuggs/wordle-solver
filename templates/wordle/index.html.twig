@@ -11,7 +11,64 @@
     .letter.wrong-location { background-color: yellow; }
 
     .frequent-words-wrapper { max-height: 200px; overflow: auto; display: inline-block; }
+
+    .mask { border: 1px solid #eee; width: 25px; height: 25px; }
+
+    .mask.correct { background-color: green; }
+    .mask.not-found { background-color: #aaaaaa; }
+    .mask.wrong-location { background-color: yellow; }
 </style>
+
+<script>
+    $(function() {
+        $("#addGuess").click();
+
+        // Toggle the classes and set the mask
+        $('.mask').click(function() {
+            $mask = $(this);
+
+            if ($mask.hasClass('correct')) {
+                $mask.removeClass('correct');
+                $mask.removeClass('wrong-location');
+                $mask.addClass('not-found');
+                $mask.data('mask', 'N');
+            } else if ($mask.hasClass('not-found')) {
+                $mask.removeClass('not-found');
+                $mask.removeClass('correct');
+                $mask.addClass('wrong-location');
+                $mask.data('mask', 'W');
+            } else if ($mask.hasClass('wrong-location')) {
+                $mask.removeClass('wrong-location');
+                $mask.removeClass('not-found');
+                $mask.addClass('correct');
+                $mask.data('mask', 'C');
+            }
+            updateMask();
+        });
+
+        function updateMask() {
+            var maskInput = $("#mask");
+            var mask = '';
+            for (let idx = 0; idx < 5; idx++) {
+                mask += $("#mask" + idx).data('mask');
+            }
+
+            maskInput.val(mask);
+        };
+
+        var guessInput = $("#word");
+        guessInput.keyup(function() {
+            var word = $(this).val().replace(/[^a-z]/gi, '').toUpperCase().substring(0, 5);
+            guessInput.val(word);
+            for (idx = 0; idx < word.length; idx++) {
+                $("#mask" + idx).val(word.charAt(idx));
+            }
+            if (word.length === 5) {
+                updateMask();
+            }
+        });
+    });
+</script>
 
 <div class="row">
     <div class="wordle-wrapper col-md-4">
@@ -39,23 +96,53 @@
                 </tr>
             {% endfor %}
         </table>
-        <form>
-            <div class="mb-3">
-                <label for="word" class="form-label">Guess</label>
-                <input type="text" class="form-control" id="word" name="word" aria-describedby="wordHelp">
-                <div id="wordHelp" class="form-text">Enter in the word you guess.</div>
-            </div>
-            <div class="mb-3">
-                <label for="mask" class="form-label">Result</label>
-                <input type="text" class="form-control" id="mask" name="mask">
-                <div id="maskHelp" class="form-text">This is the 5 character string that corresponds to your answers.  C = Correct, N = Not Found, W = Wrong Place</div>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
 
-            <hr>
+        <button type="button" id="addGuess" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#guessInput">
+            Add A Guess
+        </button>
 
-            <input type="textarea" name="results" value="{{ wordle.resultsData|json_encode() }}">
-        </form>
+        <div class="modal fade" id="guessInput" tabindex="-1" aria-labelledby="guessInputTitle" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="guessInputTitle">Guess Input</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="word" class="form-label">Guess</label>
+                                <input type="text" class="form-control" id="word" name="word" aria-describedby="wordHelp">
+                                <div id="wordHelp" class="form-text">Enter in the word you guess.</div>
+                            </div>
+                            <div class="mb-3">
+                                <fieldset>
+                                    <input type="text" class="mask not-found" data-mask="N" id="mask0" value="C" />
+                                    <input type="text" class="mask not-found" data-mask="N" id="mask1" value="H" />
+                                    <input type="text" class="mask not-found" data-mask="N" id="mask2" value="U" />
+                                    <input type="text" class="mask not-found" data-mask="N" id="mask3" value="M" />
+                                    <input type="text" class="mask not-found" data-mask="N" id="mask4" value="P" />
+                                </fieldset>
+                            </div>
+                            <div class="mb-3">
+                                <label for="mask" class="form-label">Result</label>
+                                <input type="text" class="form-control" id="mask" name="mask">
+                                <div id="maskHelp" class="form-text">This is the 5 character string that corresponds to your answers.  C = Correct, N = Not Found, W = Wrong Place</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+
+                            <hr>
+
+                            <input type="textarea" name="results" value="{{ wordle.resultsData|json_encode() }}">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="col-md-4">
