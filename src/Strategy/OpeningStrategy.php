@@ -10,9 +10,9 @@ class OpeningStrategy extends DatabaseStrategy
     public function getResults(Wordle $wordle): StrategyResults
     {
         if (0 === count($wordle->getResults())) {
-            $guess = new Guess($this, 'ROATES');
+            $guess = new Guess('ROATE');
 
-            return new StrategyResults($guess, []);
+            return new StrategyResults($this, $guess, []);
         }
 
         throw new NoGuessException('No Guess');
@@ -20,6 +20,11 @@ class OpeningStrategy extends DatabaseStrategy
 
     public function getName(): string
     {
-        return 'Opening';
+        return 'Opening Strategy';
+    }
+
+    public function getDescription(): string
+    {
+        return 'This strategy uses a static list of words based on analysis of word/letter distributions.';
     }
 }

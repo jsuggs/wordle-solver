@@ -20,13 +20,18 @@ class FrequencyStrategy extends DatabaseStrategy
 
         $results = $this->conn->fetchAllAssociative($sql);
 
-        $guess = new Guess($this, $results[0]['word']);
+        $guess = new Guess($results[0]['word']);
 
-        return new StrategyResults($guess, $results);
+        return new StrategyResults($this, $guess, $results);
     }
 
     public function getName(): string
     {
         return 'Frequency';
+    }
+
+    public function getDescription(): string
+    {
+        return 'This strategy returns the word that is most frequently used.';
     }
 }

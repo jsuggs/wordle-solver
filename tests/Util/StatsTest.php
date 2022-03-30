@@ -63,4 +63,16 @@ class StatsTest extends TestCase
         $this->assertEquals('B', $stats->getCorrectLetterForIndex(3));
         $this->assertEquals('C', $stats->getCorrectLetterForIndex(5));
     }
+
+    public function testUnknownIndexes(): void
+    {
+        $stats = new Stats();
+        $this->assertEquals([1, 2, 3, 4, 5], $stats->getUnknownIndexes());
+
+        $stats->addCorrectLetter(3, 'A');
+        $this->assertEquals([1, 2, 4, 5], $stats->getUnknownIndexes());
+
+        $stats->addWrongLocationLetter(5, 'B');
+        $this->assertEquals([1, 2, 4], $stats->getUnknownIndexes());
+    }
 }

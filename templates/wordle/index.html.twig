@@ -61,17 +61,27 @@
     <div class="col-md-4">
         <h2>Guesses</h2>
 
-        <h2>Strategies</h2>
+        <h3>Strategies</h3>
         {% for result in strategyResults %}
-            <div class="strategy">
-                <h3>{{ result.guess.word }}</h3>
+            <div class="card">
+                <h4 class="card-header">{{ result.strategy.name}}</h4>
 
-                <p>Other Results</p>
-                <ol>
-                    {% for result in result.results %}
-                        <li>{{ result.word }}</li>
-                    {% endfor %}
-                </ol>
+                <div class="card-body">
+                    {{ result.strategy.description }}
+                </div>
+
+                <button type="button" class="btn btn-primary">{{ result.guess.word }}</button>
+
+                {% if result.results|length > 0 %}
+                <div class="card-footer">
+                    <p>Other Results</p>
+                    <ol>
+                        {% for result in result.results %}
+                            <li>{{ result.word }} {{ result.score|default(0) }}</li>
+                        {% endfor %}
+                    </ol>
+                </div>
+                {% endif %}
             </div>
         {% endfor %}
     </div>

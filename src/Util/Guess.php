@@ -2,21 +2,24 @@
 
 namespace App\Util;
 
-use App\Strategy\Strategy;
-
 class Guess
 {
-    public string $word;
-    public Strategy $strategy;
+    private string $word;
+    private array $statistics;
 
-    public function __construct(Strategy $strategy, string $word)
+    public function __construct(string $word, array $statistics = [])
     {
-        $this->strategy = $strategy;
         $this->word = $word;
+        $this->statistics = $statistics;
     }
 
-    public function getAlgorithm(): string
+    public function getWord(): string
     {
-        return get_class($this->strategy);
+        return $this->word;
+    }
+
+    public function getStatistics(): array
+    {
+        return $this->statistics;
     }
 }

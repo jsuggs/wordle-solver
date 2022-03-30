@@ -18,22 +18,23 @@ class SolverTest extends KernelTestCase
 
         $wordle = $solver->solve($word, $wordle);
 
-        if (!$wordle->isSolved()) {
-            dump($wordle, $word);
-            exit();
-        }
+        // if (!$wordle->isSolved()) {
+        //    $this->assertTrue(true);
+        //    exit();
+        // }
 
         $this->assertTrue($wordle->isSolved());
+        $this->assertLessThanOrEqual(6, count($wordle->getResults()));
     }
 
     public function getWords(): array
     {
         $wordFile = __DIR__.'/../../var/data/words.csv';
 
-        return array_map(function ($line) {
+        return array_slice(array_map(function ($line) {
             $word = strtoupper(rtrim($line));
 
             return [$word];
-        }, file($wordFile));
+        }, file($wordFile)), 0, 500);
     }
 }

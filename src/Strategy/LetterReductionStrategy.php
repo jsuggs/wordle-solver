@@ -50,9 +50,11 @@ class LetterReductionStrategy extends DatabaseStrategy
 
             $results = $this->conn->fetchAllAssociative($loopSql);
 
-            $guess = new Guess($this, $results[0]['word']);
+            if (count($results)) {
+                $guess = new Guess($results[0]['word']);
 
-            return new StrategyResults($guess, $results);
+                return new StrategyResults($this, $guess, $results);
+            }
 
             --$numLettersToTry;
         }
@@ -63,5 +65,10 @@ class LetterReductionStrategy extends DatabaseStrategy
     public function getName(): string
     {
         return 'Letter Reduction';
+    }
+
+    public function getDescription(): string
+    {
+        return 'This goal of this strategy is to reduce the number of letters that are unknown.  As a result, it is only useful in middle guesses as it doesn\'t account for words with double letters';
     }
 }

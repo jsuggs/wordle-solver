@@ -9,12 +9,18 @@ class StrategyDecider
 {
     private LetterReductionStrategy $letterReductionStrategy;
     private FrequencyStrategy $frequencyStrategy;
+    private BestGuessStrategy $bestGuessStrategy;
     private OpeningStrategy $openingStrategy;
 
-    public function __construct(LetterReductionStrategy $letterReductionStrategy, FrequencyStrategy $frequencyStrategy, OpeningStrategy $openingStrategy)
+    public function __construct(
+        LetterReductionStrategy $letterReductionStrategy,
+        FrequencyStrategy $frequencyStrategy,
+        BestGuessStrategy $bestGuessStrategy,
+        OpeningStrategy $openingStrategy)
     {
         $this->letterReductionStrategy = $letterReductionStrategy;
         $this->frequencyStrategy = $frequencyStrategy;
+        $this->bestGuessStrategy = $bestGuessStrategy;
         $this->openingStrategy = $openingStrategy;
     }
 
@@ -24,6 +30,11 @@ class StrategyDecider
 
         try {
             $results[] = $this->openingStrategy->getResults($wordle);
+        } catch (NoGuessException$e) {
+        }
+
+        try {
+            $results[] = $this->bestGuessStrategy->getResults($wordle);
         } catch (NoGuessException$e) {
         }
 

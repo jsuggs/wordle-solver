@@ -53,7 +53,7 @@ class Stats
 
     public function getWrongLocationLetters(): array
     {
-        return $stats['WRONG_LOCATION']['INDEX'] ?? [];
+        return $this->data['WRONG_LOCATION']['INDEX'] ?? [];
     }
 
     public function getUnknownLetters(): array
@@ -70,6 +70,21 @@ class Stats
         $numCorrectLetters = count($this->getCorrectLetters());
 
         return 5 - $numCorrectLetters;
+    }
+
+    public function getUnknownIndexes(): array
+    {
+        $indexes = [1, 2, 3, 4, 5];
+
+        foreach ($this->data['CORRECT_LETTERS'] ?? [] as $letter => $idx) {
+            unset($indexes[array_search($idx, $indexes)]);
+        }
+
+        foreach ($this->data['WRONG_LOCATION']['INDEX'] ?? [] as $idx => $letters) {
+            unset($indexes[array_search($idx, $indexes)]);
+        }
+
+        return array_values($indexes);
     }
 
     public function setResultCount(int $resultCount)

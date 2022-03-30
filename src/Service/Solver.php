@@ -26,7 +26,7 @@ class Solver
 
         while ($guessNumber <= self::MAX_GUESSES) {
             $guess = $this->strategyDecider->getBestGuess($wordle);
-            $result = ResultTester::getGuessResult($word, $guess->word);
+            $result = ResultTester::getGuessResult($word, $guess->getWord());
             $results[] = $result;
             $wordle->setResults($results);
 

@@ -4,7 +4,6 @@ namespace App\Tests\Service;
 
 use App\Service\StatsService;
 use App\Util\Result;
-use App\Util\Stats;
 use App\Util\Wordle;
 use PHPUnit\Framework\TestCase;
 
@@ -24,7 +23,7 @@ class StatsServiceTest extends TestCase
             'NOT_FOUND_LETTERS' => [
                 'LETTERS' => [
                     'S' => 1,
-                    'T' => 1, 
+                    'T' => 1,
                     'N' => 1,
                 ],
                 'INDEX' => [
@@ -36,25 +35,19 @@ class StatsServiceTest extends TestCase
             'WRONG_LOCATION' => [
                 'INDEX' => [
                     3 => [
-                        0 => 'O'
+                        0 => 'O',
                     ],
                 ],
                 'LETTERS' => [
                     'O' => [
                         0 => 3,
                     ],
-                ]
+                ],
             ],
             'CORRECT_LETTERS' => [
-                '5' => 'E',
-                'LETTERS' => [
-                    'E' => 1,
-                ],
-                'INDEXES' => [
-                    5 => 1
-                ],
+                'E' => 5,
             ],
         ];
-        $this->assertEquals($expected, StatsService::getStats($wordle)->getData());        
+        $this->assertEquals($expected, StatsService::getStats($wordle)->getData());
     }
 }

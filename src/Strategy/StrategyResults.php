@@ -6,14 +6,20 @@ use App\Util\Guess;
 
 class StrategyResults
 {
+    private Strategy $strategy;
     private Guess $guess;
     private array $results;
-    private array $steps = [];
 
-    public function __construct(Guess $guess, array $results)
+    public function __construct(Strategy $strategy, Guess $guess, array $results)
     {
+        $this->strategy = $strategy;
         $this->guess = $guess;
         $this->results = $results;
+    }
+
+    public function getStrategy(): Strategy
+    {
+        return $this->strategy;
     }
 
     public function getGuess(): Guess
@@ -24,10 +30,5 @@ class StrategyResults
     public function getResults(): array
     {
         return $this->results;
-    }
-
-    public function addStep(string $description)
-    {
-        $this->steps[] = $description;
     }
 }
