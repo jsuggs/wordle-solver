@@ -9,6 +9,7 @@ use App\Strategy\StrategyDecider;
 use App\Util\Result;
 use App\Util\Wordle;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -25,12 +26,23 @@ class WordleController extends AbstractController
         $letterDistribution = $letterDistributionService->getLetterDistribution($wordle);
         $strategyResults = $strategyDecider->getStrategyResults($wordle);
 
-        return $this->render('wordle/index.html.twig', [
+        $response = $this->render('wordle/index.html.twig', [
             'wordle' => $wordle,
             'letterDistribution' => $letterDistribution,
             'frequentWords' => $frequentWordsService->getFrequentWords($wordle),
             'strategyResults' => $strategyResults,
+            'firstVisit' => !$request->cookies->has('first_visit'),
         ]);
+
+        $cookie = new Cookie(
+            'first_visit',    // Cookie name.
+            time(),    // Cookie value.
+            time() + (2 * 365 * 24 * 60 * 60) // Expires 2 years.
+        );
+
+        $response->headers->setCookie($cookie);
+
+        return $response;
     }
 
     /**
@@ -46,6 +58,14 @@ class WordleController extends AbstractController
         return $this->redirectToRoute('wordle', [
             'results' => json_encode($wordle->getResultsData()),
         ]);
+    }
+
+    /**
+     * @Route("/about", name="about")
+     */
+    public function about(Request $request, Solver $solver): Response
+    {
+        return $this->render('wordle/about.html.twig', []);
     }
 
     private function getWordle(Request $request): Wordle

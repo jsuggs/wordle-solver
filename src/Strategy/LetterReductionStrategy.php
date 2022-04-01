@@ -45,7 +45,7 @@ class LetterReductionStrategy extends DatabaseStrategy
                 }, $unknownIndexes));
             }
 
-            $loopSql = $sql.$notMatchingEachOther.$notMatchingKnown.' ORDER BY frequency ASC';
+            $loopSql = $sql.$notMatchingEachOther.$notMatchingKnown.' ORDER BY frequency ASC LIMIT 50';
             // dump($sql, $knownLetters, $loopSql);
 
             $results = $this->conn->fetchAllAssociative($loopSql);
