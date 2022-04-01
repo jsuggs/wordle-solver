@@ -1,26 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block body %}
-
-<style>
-    .letter { width: 25px; height: 25px; text-align: center; }
-    .letter.correct { background-color: green; }
-    .letter.not-found { background-color: #aaaaaa; }
-    .letter.wrong-location { background-color: yellow; }
-
-    .frequent-words-wrapper { max-height: 200px; overflow: auto; display: inline-block; }
-
-    .mask { border: 1px solid #eee; width: 25px; height: 25px; }
-
-    .mask.correct { background-color: green; }
-    .mask.not-found { background-color: #aaaaaa; }
-    .mask.wrong-location { background-color: yellow; }
-</style>
-
+{% block javascripts %}
 <script>
     $(function() {
         // Toggle the classes and set the mask
-        $('.mask').click(function() {
+        $('.mask').click(function(e) {
             $mask = $(this);
 
             if ($mask.hasClass('correct')) {
@@ -40,6 +24,8 @@
                 $mask.data('mask', 'C');
             }
             updateMask();
+
+            e.preventDefault();
         });
 
         function updateMask() {
@@ -53,18 +39,44 @@
         };
 
         var guessInput = $("#word");
+        var submitBtn = $("#add-guess");
         guessInput.keyup(function() {
             var word = $(this).val().replace(/[^a-z]/gi, '').toUpperCase().substring(0, 5);
             guessInput.val(word);
-            for (idx = 0; idx < word.length; idx++) {
-                $("#mask" + idx).val(word.charAt(idx));
+            for (idx = 0; idx < 5; idx++) {
+                $("#mask" + idx).html(word.charAt(idx) ?? ' ');
             }
             if (word.length === 5) {
                 updateMask();
+                submitBtn.removeAttr('disabled');
+            } else {    
+                submitBtn.prop('disabled', true);
             }
+        });
+
+        submitBtn.click(function() {
+            $("#guess-form").submit();
         });
     });
 </script>
+{% endblock %}
+
+{% block body %}
+
+<style>
+    .letter { width: 25px; height: 25px; text-align: center; }
+    .letter.correct { background-color: green; }
+    .letter.not-found { background-color: #aaaaaa; }
+    .letter.wrong-location { background-color: yellow; }
+
+    .frequent-words-wrapper { max-height: 200px; overflow: auto; display: inline-block; }
+
+    .mask { border: 1px solid #eee;  }
+
+    .mask.correct { background-color: green; }
+    .mask.not-found { background-color: #aaaaaa; }
+    .mask.wrong-location { background-color: yellow; }
+</style>
 
 {% if firstVisit %}
     <div class="text-center">
@@ -117,6 +129,9 @@
                             {{ result.getLetter(idx) }}
                         </td>
                     {% endfor %}
+                    <td>
+                        <a href="">Jump</a>
+                    </td>
                 </tr>
             {% endfor %}
         </table>
@@ -133,7 +148,8 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form>
+                        <p>Enter the guess and the result</p>
+                        <form id="guess-form">
                             <div class="mb-3">
                                 <label for="word" class="form-label">Guess</label>
                                 <input type="text" class="form-control" id="word" name="word" aria-describedby="wordHelp" placeholder="ex. CHUMP">
@@ -142,14 +158,14 @@
                             <div class="mb-3">
                                 <p>Result of the guess.  Click each letter to toggle.</p>
                                 <fieldset>
-                                    <input type="text" class="mask not-found" data-mask="N" id="mask0" value="C" />
-                                    <input type="text" class="mask not-found" data-mask="N" id="mask1" value="H" />
-                                    <input type="text" class="mask not-found" data-mask="N" id="mask2" value="U" />
-                                    <input type="text" class="mask not-found" data-mask="N" id="mask3" value="M" />
-                                    <input type="text" class="mask not-found" data-mask="N" id="mask4" value="P" />
+                                    <button class="btn mask not-found" data-mask="N" id="mask0">C</button>
+                                    <button class="btn mask not-found" data-mask="N" id="mask1">H</button>
+                                    <button class="btn mask not-found" data-mask="N" id="mask2">U</button>
+                                    <button class="btn mask not-found" data-mask="N" id="mask3">M</button>
+                                    <button class="btn mask not-found" data-mask="N" id="mask4">P</button>
                                 </fieldset>
                             </div>
-                            <div class="mb-3 visually-hidden">
+                            <div class="visually-hidden">
                                 <label for="mask" class="form-label">Result</label>
                                 <input type="text" class="form-control" id="mask" name="mask">
                                 <div id="maskHelp" class="form-text">This is the 5 character string that corresponds to your answers.  C = Correct, N = Not Found, W = Wrong Place</div>
@@ -159,8 +175,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Add Guess</button>
+                        <button type="button" id="add-guess" class="btn btn-primary" disabled >Add Guess</button>
                     </div>
                 </div>
             </div>
