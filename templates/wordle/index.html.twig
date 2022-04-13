@@ -52,7 +52,7 @@
 
         wordInput.keyup(function() {
             var word = $(this).val().replace(/[^a-z]/gi, '').toUpperCase().substring(0, 5);
-            maskInput.val(word);
+            wordInput.val(word);
             for (idx = 0; idx < 5; idx++) {
                 $("#mask" + idx).html(word.charAt(idx) ?? ' ');
             }
