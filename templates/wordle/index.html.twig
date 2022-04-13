@@ -32,6 +32,11 @@
             e.preventDefault();
         });
 
+        // Put the focus on the input when modal shown
+        $('#guessInput').on('shown.bs.modal', function (e) {
+            wordInput.focus();
+        });
+
         function updateMask() {
             var mask = '';
             for (let idx = 0; idx < 5; idx++) {
@@ -40,6 +45,10 @@
 
             maskInput.val(mask);
         };
+
+        $('.guess').click(function(e) {
+            wordInput.val($(this).text()).keyup(); 
+        });
 
         wordInput.keyup(function() {
             var word = $(this).val().replace(/[^a-z]/gi, '').toUpperCase().substring(0, 5);
@@ -102,7 +111,7 @@
         </div>
         <div class="col align-items-start">
             <h2>Help</h2>
-            <button type="button" id="addGuess" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#guessInput">
+            <button type="button" class="btn btn-primary addGuess" data-bs-toggle="modal" data-bs-target="#guessInput">
                 Add A Guess
             </button>
         </div>
@@ -113,22 +122,24 @@
     <div class="wordle-wrapper col-md-4">
         <h3>Wordle Help</h3>
         <p>Stuck and need some guidance?  This can walk you through any stage of a wordle, give suggestions for your next guess or just want to see some stats.</p>
-        <table class="wordle">
-            {% for result in wordle.results %}
-                <tr>
-                    {% for idx in 1..5 %}
-                        <td class="letter {{ result.getStatusName(idx) }}">
-                            {{ result.getLetter(idx) }}
+        <table class="wordle table table-hover">
+            <tbody>
+                {% for result in wordle.results %}
+                    <tr {% if loop.last %} class="table-active"{% endif %}>
+                        {% for idx in 1..5 %}
+                            <td class="letter {{ result.getStatusName(idx) }}">
+                                {{ result.getLetter(idx) }}
+                            </td>
+                        {% endfor %}
+                        <td>
+                            <a href="">Jump</a>
                         </td>
-                    {% endfor %}
-                    <td>
-                        <a href="">Jump</a>
-                    </td>
-                </tr>
-            {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
         </table>
 
-        <button type="button" id="addGuess" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#guessInput">
+        <button type="button" class="btn btn-primary addGuess" data-bs-toggle="modal" data-bs-target="#guessInput">
             Add A Guess
         </button>
 
@@ -186,7 +197,7 @@
                     {{ result.strategy.description }}
                 </div>
 
-                <button type="button" class="btn btn-primary">{{ result.guess.word }}</button>
+                <button type="button" class="btn btn-primary guess" data-bs-toggle="modal" data-bs-target="#guessInput">{{ result.guess.word }}</button>
 
                 {% if result.results|length > 0 %}
                 <div class="card-footer">
