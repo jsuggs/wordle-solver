@@ -124,7 +124,7 @@
         <p>Stuck and need some guidance?  This can walk you through any stage of a wordle, give suggestions for your next guess or just want to see some stats.</p>
         <table class="wordle table table-hover">
             <tbody>
-                {% for result in wordle.results %}
+                {% for idx, result in wordle.results %}
                     <tr {% if loop.last %} class="table-active"{% endif %}>
                         {% for idx in 1..5 %}
                             <td class="letter {{ result.getStatusName(idx) }}">
@@ -132,7 +132,9 @@
                             </td>
                         {% endfor %}
                         <td>
-                            <a href="">Jump</a>
+                            {% if not loop.last %}
+                            <a href="{{ path('wordle', wordle_url_params(wordle, idx)) }}">Jump</a>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

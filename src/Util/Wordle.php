@@ -8,6 +8,16 @@ class Wordle
     public static $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
     private array $results = [];
 
+    public function atIdx(int $idx): Wordle
+    {
+        $results = $this->results;
+
+        $wordle = new self();
+        $wordle->setResults(array_slice($results, 0, ++$idx));
+
+        return $wordle;
+    }
+
     public function addResult(Result $result)
     {
         $this->results[] = $result;
@@ -21,11 +31,6 @@ class Wordle
     public function getResults(): array
     {
         return $this->results;
-    }
-
-    public function getResult(int $idx): ?Result
-    {
-        return $this->result[$idx];
     }
 
     public function getResultsData(): array
