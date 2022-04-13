@@ -3,6 +3,10 @@
 {% block javascripts %}
 <script>
     $(function() {
+        var maskInput = $("#mask");
+        var wordInput = $("#word");
+        var submitBtn = $("#add-guess");
+
         // Toggle the classes and set the mask
         $('.mask').click(function(e) {
             $mask = $(this);
@@ -29,7 +33,6 @@
         });
 
         function updateMask() {
-            var maskInput = $("#mask");
             var mask = '';
             for (let idx = 0; idx < 5; idx++) {
                 mask += $("#mask" + idx).data('mask');
@@ -38,11 +41,9 @@
             maskInput.val(mask);
         };
 
-        var guessInput = $("#word");
-        var submitBtn = $("#add-guess");
-        guessInput.keyup(function() {
+        wordInput.keyup(function() {
             var word = $(this).val().replace(/[^a-z]/gi, '').toUpperCase().substring(0, 5);
-            guessInput.val(word);
+            maskInput.val(word);
             for (idx = 0; idx < 5; idx++) {
                 $("#mask" + idx).html(word.charAt(idx) ?? ' ');
             }
@@ -90,35 +91,26 @@
 
 {% if wordle.results|length == 0 %}
     <div class="row d-flex g-4 py-4 my-4 border border-primary shadow">
-        <div class="col align-items-start">
-            <div class="feature-icon bg-primary bg-gradient">
-                <i class="bi bi-bar-chart-steps"></i>
-            </div>
+        <div class="col align-items-start border border-help">
             <h2>Solve</h2>
 
-            <p>If you know the word you are trying to solve, here</p>
-            <input type="text">
+            <p>If you know the word you are trying to solve, enter here it here for a step by step solution</p>
+            <form action="/solve">
+                <input type="text" name="word">
+                <button type="submit" class="btn btn-primary">Show solution</button>
+            </form>
         </div>
         <div class="col align-items-start">
             <h2>Help</h2>
-            <button>Get Started</button>
+            <button type="button" id="addGuess" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#guessInput">
+                Add A Guess
+            </button>
         </div>
     </div>
 {% endif %}
 
 <div class="row">
     <div class="wordle-wrapper col-md-4">
-        <h2>Wordle Input</h2>
-
-        <h3>Solve a Wordle?</h3>
-        <p>This will show a path to a solution of the wordle.</p>
-        <form action="/solve">
-            <input type="text" name="word">
-            <button type="submit" class="btn btn-primary">Show solution</button>
-        </form>
-
-        <hr>
-
         <h3>Wordle Help</h3>
         <p>Stuck and need some guidance?  This can walk you through any stage of a wordle, give suggestions for your next guess or just want to see some stats.</p>
         <table class="wordle">
